@@ -4,6 +4,18 @@ All notable changes to Ripple are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-08-07
+
+### Added
+
+- Typed public API — `import type { RippleConfig } from "@alimaandev/ripple"` for fully-typed `ripple.config.ts` files.
+- `export` map / `types` entry and `publishConfig.access: public` for reliable publishing.
+- `CHANGELOG.md`.
+
+### Changed
+
+- README images use absolute URLs so the npm package page renders them correctly.
+
 ## [0.1.0] - 2026-08-07
 
 Initial release. `@alimaandev/ripple` is published to npm.

@@ -94,7 +94,7 @@ Everything below is real output against a shipped example project in `tests/fixt
 ```bash
 npm install -g @alimaandev/ripple
 
-ripple version                  # → 0.1.0
+ripple version                  # → 0.1.1
 ```
 
 Or install from source:
