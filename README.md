@@ -34,25 +34,19 @@ So the blast radius of a change becomes a guess.
 
 **Ripple makes it explicit.**
 
-It builds the project's import graph once, then walks it in reverse to show exactly how a change propagates through your codebase.
+It builds the project's import graph once, then walks it in reverse to show
+exactly how a change propagates through your codebase:
 
 ```text
-ripple analyze src/auth/session.ts
+$ ripple analyze src/authentication/login.ts
 
-42 files affected
-8 routes
-17 tests
-11 components
-
-Risk  78 / 100
-
-session.ts
-    ↓
-auth.ts
-    ↓
-AuthProvider.tsx
-    ↓
-Dashboard.tsx
+Risk            MEDIUM
+Affected Files  7 files
+API Routes      4
+Components      2
+Tests           1
+Max Depth       2
+Confidence      100%
 ```
 
 No black box.
