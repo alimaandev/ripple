@@ -24,7 +24,8 @@ describe("globFiles", () => {
       patterns: ["**/*.{ts,tsx}"],
       ignore: ["**/src/tests/**"],
     });
-    expect(files.some((f) => f.includes(`${path.sep}tests${path.sep}`))).toBe(false);
+    const leaked = files.filter((f) => f.replace(/\\/g, "/").includes("/src/tests/"));
+    expect(leaked).toEqual([]);
   });
 
   it("returns an empty array for an empty project", async () => {
