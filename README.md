@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/ripple-logo.png" alt="Ripple logo" width="160">
+  <img src="assets/ripple-logo.png?v=2" alt="Ripple logo" width="160">
 </p>
 
 # 🌊 Ripple
