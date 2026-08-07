@@ -13,6 +13,7 @@ import {
   type GraphReportInput,
 } from "../../../src/output/report.js";
 import { InMemoryWriter } from "../../../src/output/writer.js";
+import { icon } from "../../../src/ui/icons.js";
 import { pathKey } from "../../../src/utils/paths.js";
 import { loadProjectContext } from "../../../src/config/loader.js";
 import type { AnalysisResult } from "../../../src/types/analysis.js";
@@ -74,17 +75,17 @@ describe("renderAnalyzeReport", () => {
     renderAnalyzeReport(result, { cwd: rootDir, color: false, verbose: false }, writer);
 
     const output = writer.output;
-    expect(output).toContain("Ripple Analysis");
-    expect(output).toContain("Risk            MEDIUM");
-    expect(output).toContain("Affected Files  7 files");
-    expect(output).toContain("API Routes      4");
-    expect(output).toContain("Tests           1");
+    expect(output).toContain("ripple — impact analysis");
+    expect(output).toMatch(/Risk\s+MEDIUM/);
+    expect(output).toContain("/100");
+    expect(output).toMatch(/Affected\s+7 files/);
+    expect(output).toContain("4 routes · 2 components · 1 test");
     expect(output).toContain("Confidence");
-    expect(output).toContain("Top Impact");
-    expect(output).toContain("• Dashboard (2)");
-    expect(output).toContain("src/tests/login.test.ts (depth 1)");
-    expect(output).toContain("src/main.ts (depth 2)");
-    expect(output).toContain("⭕");
+    expect(output).toContain("Top impact");
+    expect(output).toContain("Dashboard (2)");
+    expect(output).toContain("src/tests/login.test.ts · depth 1");
+    expect(output).toContain("src/main.ts · depth 2");
+    expect(output).toContain(`src/circular/a.ts ${icon("arrowRight")} src/circular/c.ts`);
   });
 
   it("includes the risk factor table in verbose mode", async () => {
@@ -92,7 +93,7 @@ describe("renderAnalyzeReport", () => {
     const writer = new InMemoryWriter();
     renderAnalyzeReport(result, { cwd: rootDir, color: false, verbose: true }, writer);
 
-    expect(writer.output).toContain("Risk Factors");
+    expect(writer.output).toContain("Risk factors");
     expect(writer.output).toContain("Affected files");
     expect(writer.output).toContain("Weight");
     expect(writer.output).toContain("Points");
@@ -147,7 +148,7 @@ describe("renderAnalyzeReport", () => {
 
     const writer = new InMemoryWriter();
     renderAnalyzeReport(result, { cwd: rootDir, color: false, verbose: false }, writer);
-    expect(writer.output).toContain("(cycle)");
+    expect(writer.output).toContain("· cycle");
   });
 });
 
@@ -202,7 +203,9 @@ describe("renderGraphReport", () => {
     expect(output).toContain("Files            25");
     expect(output).toContain("Edges            30");
     expect(output).toContain("Circular groups  1");
-    expect(output).toContain("⭕ src/circular/a.ts → src/circular/b.ts → src/circular/c.ts");
+    expect(output).toContain(
+      `${icon("circle")} src/circular/a.ts ${icon("arrowRight")} src/circular/b.ts ${icon("arrowRight")} src/circular/c.ts`,
+    );
   });
 
   it("renders forward and reverse lists when provided", () => {
@@ -224,7 +227,7 @@ describe("renderGraphReport", () => {
     input.cycles = [];
     const writer = new InMemoryWriter();
     renderGraphReport(input, { cwd: rootDir, color: false, verbose: false }, writer);
-    expect(writer.output).toContain("No circular dependencies found.");
+    expect(writer.output).toContain("none");
   });
 });
 

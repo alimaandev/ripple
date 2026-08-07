@@ -44,13 +44,12 @@ exactly how a change propagates through your codebase:
 ```text
 $ ripple analyze src/authentication/login.ts
 
-Risk            MEDIUM
-Affected Files  7 files
-API Routes      4
-Components      2
-Tests           1
-Max Depth       2
-Confidence      100%
+File        src/authentication/login.ts
+Risk        MEDIUM · 34.7/100 ███░░░░░░░
+Impact      4 routes · 2 components · 1 test
+Affected    7 files
+Max depth   2
+Confidence  100%
 ```
 
 No black box.
@@ -117,30 +116,32 @@ ripple analyze src/authentication/login.ts
 Expected output:
 
 ```text
-🌊 Ripple Analysis
+╭ ripple ────────────────────────────╮
+│  ❯ impact analysis · v0.2.0        │
+╰────────────────────────────────────╯
 
-File            src/authentication/login.ts
-Risk            MEDIUM
-Affected Files  7 files
-Components      2
-API Routes      4
-Tests           1
-Utilities       0
-Max Depth       2
-Confidence      100%
+File        src/authentication/login.ts
+Risk        MEDIUM · 34.7/100 ███░░░░░░░
+Impact      4 routes · 2 components · 1 test
+Affected    7 files
+Max depth   2
+Confidence  100%
 
-Top Impact
-• Dashboard (2)
-• Admin (1)
-• Index TS (1)
+────────────────────────────────────
+Top impact
+● Dashboard (2)
+● Admin (1)
+● Index TS (1)
 
-Circular Dependencies
-⭕ src/circular/a.ts → src/circular/c.ts → src/circular/b.ts → src/circular/a.ts
+────────────────────────────────────
+Circular dependencies
+◯ src/circular/a.ts → src/circular/c.ts → src/circular/b.ts → src/circular/a.ts
 
-Affected Files (7)
-├─ src/admin/page.tsx (depth 1)
-├─ src/dashboard/page.tsx (depth 1)
-└─ src/main.ts (depth 2)
+────────────────────────────────────
+Affected files (7)
+├─ src/admin/page.tsx · depth 1
+├─ src/dashboard/page.tsx · depth 1
+└─ src/main.ts · depth 2
 ```
 
 ### See more of the project
@@ -153,7 +154,9 @@ ripple graph
 ```
 
 ```text
-🌊 Dependency Graph
+╭ ripple ────────────────────────────╮
+│  ❯ dependency graph · v0.2.0       │
+╰────────────────────────────────────╯
 
 Files            25
 Edges            28
@@ -161,8 +164,9 @@ External         4
 Unresolved       0
 Circular groups  1
 
-Circular Dependencies
-⭕ src/circular/a.ts → src/circular/c.ts → src/circular/b.ts → src/circular/a.ts
+────────────────────────────────────
+Circular dependencies
+◯ src/circular/a.ts → src/circular/c.ts → src/circular/b.ts → src/circular/a.ts
 ```
 
 Point it at a file to see its dependency tree — forwards (what it imports)

@@ -6,16 +6,17 @@ import { displayPath } from "../utils/paths.js";
 import { renderKeyValue, renderTable, type TableColumn } from "../formatter/table.js";
 import { renderTree, type TreeNode } from "../formatter/tree.js";
 import {
-  banner,
   confidenceText,
   dim,
   formatDuration,
   pluralize,
   riskBadge,
-  sectionTitle,
   strong,
   type TextStyle,
 } from "../formatter/text.js";
+import { brandHeader, sectionHeader } from "../ui/brand.js";
+import { riskGauge } from "../ui/gauge.js";
+import { icon } from "../ui/icons.js";
 
 /**
  * Report rendering. Terminal output is built here; JSON payloads are built
@@ -25,10 +26,12 @@ import {
 export interface ReportOptions {
   /** Working directory used to relativize display paths. */
   cwd: string;
-  /** Whether to emit ANSI colors. */
+  /** Whether to emit ANSI colors and styled layout. */
   color: boolean;
   /** Extra sections (risk factor breakdown). */
   verbose: boolean;
+  /** Package version shown in the header card. */
+  version?: string;
   /** Cap on affected files listed in the terminal tree. */
   listLimit?: number;
 }
@@ -37,12 +40,23 @@ const DEFAULT_LIST_LIMIT = 20;
 
 const textStyle = (options: ReportOptions): TextStyle => ({ color: options.color });
 
-/** Project-relative path for display, with an optional depth suffix. */
+/** Project-relative path for display, with optional depth/cycle suffixes. */
 function fileLabel(filePath: string, depth: number, inCycle: boolean, style: TextStyle): string {
-  const relative = dim(filePath, style);
-  const depthSuffix = dim(`(depth ${depth})`, style);
-  const cycleSuffix = dim("(cycle)", style);
-  return `${relative} ${depthSuffix}${inCycle ? ` ${cycleSuffix}` : ""}`;
+  const parts: string[] = [dim(filePath, style)];
+  if (depth >= 0) parts.push(dim(`· depth ${depth}`, style));
+  if (inCycle) parts.push(dim("· cycle", style));
+  return parts.join(" ");
+}
+
+/** Impact categories inline, e.g. `4 routes · 2 components · 1 test`. */
+function impactLine(result: AnalysisResult, style: TextStyle): string {
+  const { summary } = result;
+  const parts: string[] = [];
+  if (summary.routes > 0) parts.push(pluralize(summary.routes, "route"));
+  if (summary.components > 0) parts.push(pluralize(summary.components, "component"));
+  if (summary.tests > 0) parts.push(pluralize(summary.tests, "test"));
+  if (summary.utilities > 0) parts.push(pluralize(summary.utilities, "utility"));
+  return parts.length > 0 ? parts.join(" · ") : dim("none", style);
 }
 
 /** Build the affected-file tree: depth-1 files are roots, deeper files are
@@ -90,9 +104,7 @@ function buildAffectedTree(result: AnalysisResult, cwd: string, style: TextStyle
   return roots;
 }
 
-/**
- * Render the full `ripple analyze` terminal report.
- */
+/** Render the full `ripple analyze` terminal report. */
 export function renderAnalyzeReport(
   result: AnalysisResult,
   options: ReportOptions,
@@ -102,32 +114,35 @@ export function renderAnalyzeReport(
   const { summary, risk } = result;
   const file = displayPath(result.targetPath, options.cwd);
 
-  writer.writeLine(banner("🌊 Ripple Analysis", style));
+  writer.writeLine(brandHeader({ label: "impact analysis", version: options.version, style }));
   writer.writeLine();
 
-  writer.writeLine(
-    renderKeyValue([
-      ["File", file],
-      ["Risk", riskBadge(risk.level, style)],
-      ["Affected Files", pluralize(summary.affectedFiles, "file")],
-      ["Components", String(summary.components)],
-      ["API Routes", String(summary.routes)],
-      ["Tests", String(summary.tests)],
-      ["Utilities", String(summary.utilities)],
-      ["Max Depth", String(summary.maxDepth)],
-      ["Confidence", confidenceText(summary.confidence, style)],
-      ["Duration", dim(formatDuration(result.durationMs), style)],
-    ]),
-  );
-  writer.writeLine();
-
-  writer.writeLine(sectionTitle("Top Impact", style));
-  for (const area of summary.topImpact) {
-    writer.writeLine(`• ${strong(area.label, style)} ${dim(`(${area.count})`, style)}`);
+  const score = risk.score.toFixed(1);
+  const gauge = riskGauge(risk.score, risk.level, style);
+  const rows: Array<[string, string]> = [
+    ["File", file],
+    ["Risk", `${riskBadge(risk.level, style)} · ${score}/100${gauge ? ` ${gauge}` : ""}`],
+    ["Impact", impactLine(result, style)],
+    ["Affected", pluralize(summary.affectedFiles, "file")],
+    ["Max depth", String(summary.maxDepth)],
+    ["Confidence", confidenceText(summary.confidence, style)],
+    ["Duration", dim(formatDuration(result.durationMs), style)],
+  ];
+  const width = Math.max(...rows.map(([key]) => key.length));
+  for (const [key, value] of rows) {
+    writer.writeLine(`${key.padEnd(width)}  ${value}`);
   }
   writer.writeLine();
 
-  writer.writeLine(sectionTitle("Circular Dependencies", style));
+  writer.writeLine(sectionHeader("Top impact", style));
+  for (const area of summary.topImpact) {
+    writer.writeLine(
+      `${icon("bullet")} ${strong(area.label, style)} ${dim(`(${area.count})`, style)}`,
+    );
+  }
+  writer.writeLine();
+
+  writer.writeLine(sectionHeader("Circular dependencies", style));
   if (result.graph.cycles.length === 0) {
     writer.writeLine(dim("none", style));
   } else {
@@ -137,14 +152,14 @@ export function renderAnalyzeReport(
           const node = result.graph.nodes.get(key);
           return displayPath(node?.path ?? key, options.cwd);
         })
-        .join(" → ");
-      writer.writeLine(`⭕ ${chain}`);
+        .join(` ${icon("arrowRight")} `);
+      writer.writeLine(`${icon("circle")} ${chain}`);
     }
   }
   writer.writeLine();
 
   if (summary.affectedFiles > 0) {
-    writer.writeLine(sectionTitle(`Affected Files (${summary.affectedFiles})`, style));
+    writer.writeLine(sectionHeader(`Affected files (${summary.affectedFiles})`, style));
     const tree = buildAffectedTree(result, options.cwd, style);
     writer.writeLine(renderTree(tree));
     const limit = options.listLimit ?? DEFAULT_LIST_LIMIT;
@@ -157,21 +172,27 @@ export function renderAnalyzeReport(
   }
 
   if (options.verbose) {
-    writer.writeLine(sectionTitle("Risk Factors", style));
+    writer.writeLine(sectionHeader("Risk factors", style));
     const columns: TableColumn[] = [
       { header: "Factor" },
       { header: "Weight" },
       { header: "Signal" },
       { header: "Points" },
     ];
-    const rows = risk.factors.map((factor) => [
+    const rowsVerbose = risk.factors.map((factor) => [
       factor.label,
       factor.weight.toFixed(2),
       factor.value.toFixed(2),
       factor.contribution.toFixed(2),
     ]);
-    writer.writeLine(renderTable(columns, rows));
+    writer.writeLine(renderTable(columns, rowsVerbose));
     writer.writeLine();
+  }
+
+  if (style.color) {
+    writer.writeLine(
+      dim(`${icon("info")} Tip: run "ripple doctor" to check project health`, style),
+    );
   }
 }
 
@@ -223,7 +244,7 @@ export function renderGraphReport(
   const style = textStyle(options);
   const { stats } = input;
 
-  writer.writeLine(banner("🌊 Dependency Graph", style));
+  writer.writeLine(brandHeader({ label: "dependency graph", version: options.version, style }));
   writer.writeLine();
 
   writer.writeLine(
@@ -238,29 +259,29 @@ export function renderGraphReport(
   writer.writeLine();
 
   if (input.forward) {
-    writer.writeLine(sectionTitle("Dependants (forward)", style));
+    writer.writeLine(sectionHeader("Dependants (forward)", style));
     writer.writeLine(renderTree(input.forward.map((path) => ({ label: path }))));
     writer.writeLine();
   }
   if (input.reverse) {
-    writer.writeLine(sectionTitle("Dependents (reverse)", style));
+    writer.writeLine(sectionHeader("Dependents (reverse)", style));
     writer.writeLine(renderTree(input.reverse.map((path) => ({ label: path }))));
     writer.writeLine();
   }
 
-  if (input.cycles.length > 0) {
-    writer.writeLine(sectionTitle("Circular Dependencies", style));
+  writer.writeLine(sectionHeader("Circular dependencies", style));
+  if (input.cycles.length === 0) {
+    writer.writeLine(dim("none", style));
+  } else {
     for (const cycle of input.cycles) {
       const chain = cycle.path
         .map((key) => {
           const node = input.nodes.get(key);
           return displayPath(node?.path ?? key, input.cwd);
         })
-        .join(" → ");
-      writer.writeLine(`⭕ ${chain}`);
+        .join(` ${icon("arrowRight")} `);
+      writer.writeLine(`${icon("circle")} ${chain}`);
     }
-  } else {
-    writer.writeLine(dim("No circular dependencies found.", style));
   }
 }
 

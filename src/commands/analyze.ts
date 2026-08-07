@@ -1,6 +1,7 @@
 import { loadProjectContext } from "../config/loader.js";
 import { analyzeFile } from "../analyzer/analyze.js";
-import { createSpinner } from "../cli/spinner.js";
+import { createStageTracker } from "../ui/progress.js";
+import { resolveColor } from "../ui/color.js";
 import { buildAnalyzeJsonReport, renderAnalyzeReport } from "../output/report.js";
 import { serializeJson } from "../formatter/json.js";
 import { requireNode, resolveTargetFile, runPipeline } from "./pipeline.js";
@@ -25,13 +26,16 @@ export async function analyzeCommand(
     throw new RippleError(`File not found: ${fileArg}`, ExitCode.NotFound);
   }
 
-  const spinner = createSpinner(!options.json);
-  spinner.start("Analyzing project…");
+  const tracker = createStageTracker(!options.json);
+  tracker.next("Loading config");
 
   const started = Date.now();
   const context = await loadProjectContext(ctx.cwd, options.config);
+
+  tracker.next("Building dependency graph");
   const { graph, entryPoints, durationMs: pipelineMs } = await runPipeline(context);
 
+  tracker.next("Analyzing impact");
   const completed = Date.now();
   const result = analyzeFile({
     graph,
@@ -42,7 +46,7 @@ export async function analyzeCommand(
     durationMs: pipelineMs + (completed - started),
     ...(options.depth !== undefined ? { maxDepth: options.depth } : {}),
   });
-  spinner.stop();
+  tracker.done();
 
   if (options.json) {
     const report = buildAnalyzeJsonReport(result, ctx.version, ctx.cwd);
@@ -54,8 +58,9 @@ export async function analyzeCommand(
     result,
     {
       cwd: ctx.cwd,
-      color: options.color !== false,
+      color: resolveColor(options.color),
       verbose: options.verbose,
+      version: ctx.version,
     },
     ctx.writer,
   );

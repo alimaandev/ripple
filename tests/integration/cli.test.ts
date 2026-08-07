@@ -73,9 +73,9 @@ describe("ripple analyze", () => {
   it("renders a terminal report without --json", { timeout: 90_000 }, () => {
     const result = runCli(["analyze", "src/authentication/login.ts"], basicFixture);
     expect(result.code).toBe(0);
-    expect(result.stdout).toContain("Ripple Analysis");
+    expect(result.stdout).toContain("impact analysis");
     expect(result.stdout).toContain("MEDIUM");
-    expect(result.stdout).toContain("Affected Files");
+    expect(result.stdout).toContain("Affected files");
   });
 
   it("exits 2 for a missing file", { timeout: 90_000 }, () => {
@@ -132,9 +132,9 @@ describe("ripple graph", () => {
   it("renders a terminal report", { timeout: 90_000 }, () => {
     const result = runCli(["graph"], basicFixture);
     expect(result.code).toBe(0);
-    expect(result.stdout).toContain("Dependency Graph");
+    expect(result.stdout).toContain("dependency graph");
     expect(result.stdout).toContain("Circular groups  1");
-    expect(result.stdout).toContain("⭕");
+    expect(result.stdout).toContain("src/circular/a.ts → src/circular/c.ts");
   });
 });
 
@@ -142,9 +142,10 @@ describe("ripple doctor", () => {
   it("reports a healthy project (cycle warning expected in fixture)", { timeout: 90_000 }, () => {
     const result = runCli(["doctor"], basicFixture);
     expect(result.code).toBe(0);
-    expect(result.stdout).toContain("✓ package.json");
-    expect(result.stdout).toContain("✓ import resolution");
-    expect(result.stdout).toContain("⚠ circular dependencies");
+    expect(result.stdout).toContain("project health check");
+    expect(result.stdout).toContain("package.json");
+    expect(result.stdout).toContain("import resolution");
+    expect(result.stdout).toContain("circular dependencies");
   });
 
   it("exits 1 when a project has no source files", { timeout: 90_000 }, () => {
@@ -155,7 +156,7 @@ describe("ripple doctor", () => {
     );
     const result = runCli(["doctor"], emptyDir);
     expect(result.code).toBe(1);
-    expect(result.stdout).toContain("✖ source files");
+    expect(result.stdout).toContain("source files");
   });
 });
 

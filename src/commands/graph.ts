@@ -1,5 +1,6 @@
 import { loadProjectContext } from "../config/loader.js";
-import { createSpinner } from "../cli/spinner.js";
+import { createStageTracker } from "../ui/progress.js";
+import { resolveColor } from "../ui/color.js";
 import { buildGraphJsonReport, renderGraphReport } from "../output/report.js";
 import { serializeJson } from "../formatter/json.js";
 import { requireNode, resolveTargetFile, runPipeline } from "./pipeline.js";
@@ -59,12 +60,14 @@ export async function graphCommand(
   options: GraphOptions,
   ctx: CommandContext,
 ): Promise<ExitCode> {
-  const spinner = createSpinner(!options.json);
-  spinner.start(fileArg ? "Building dependency tree…" : "Building graph…");
+  const tracker = createStageTracker(!options.json);
+  tracker.next("Loading config");
   const cwd = ctx.cwd;
 
   try {
     const context = await loadProjectContext(cwd, options.config);
+
+    tracker.next("Building graph");
     const { graph } = await runPipeline(context);
 
     const input = {
@@ -75,13 +78,19 @@ export async function graphCommand(
     };
 
     if (!fileArg) {
+      tracker.done();
       if (options.json) {
         const report = buildGraphJsonReport(input, ctx.version);
         ctx.writer.write(serializeJson(report));
       } else {
         renderGraphReport(
           input,
-          { cwd, color: options.color !== false, verbose: options.verbose },
+          {
+            cwd,
+            color: resolveColor(options.color),
+            verbose: options.verbose,
+            version: ctx.version,
+          },
           ctx.writer,
         );
       }
@@ -92,6 +101,8 @@ export async function graphCommand(
     const { key } = requireNode(graph, targetPath, context.rootDir);
     const dependants = walk(graph, key, graph.forward, options.depth, cwd);
     const dependents = walk(graph, key, graph.reverse, options.depth, cwd);
+
+    tracker.done();
 
     if (options.json) {
       const report = buildGraphJsonReport(
@@ -109,12 +120,12 @@ export async function graphCommand(
           forward: options.reverse ? undefined : dependants,
           reverse: options.reverse ? dependents : undefined,
         },
-        { cwd, color: options.color !== false, verbose: options.verbose },
+        { cwd, color: resolveColor(options.color), verbose: options.verbose, version: ctx.version },
         ctx.writer,
       );
     }
     return ExitCode.Success;
   } finally {
-    spinner.stop();
+    tracker.done();
   }
 }

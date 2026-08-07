@@ -1,6 +1,6 @@
 {
   "name": "@alimaandev/ripple",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Dependency impact analysis for TypeScript projects. Answers the question: what will break if I change this file?",
   "keywords": [
     "cli",
@@ -57,9 +57,11 @@
     "prepublishOnly": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build"
   },
   "dependencies": {
+    "boxen": "^8.0.1",
     "chalk": "^6.0.0",
     "commander": "^15.0.0",
     "fast-glob": "^3.3.3",
+    "figures": "^6.1.0",
     "jiti": "^2.7.0",
     "ora": "^9.4.1",
     "treeify": "^1.1.0",

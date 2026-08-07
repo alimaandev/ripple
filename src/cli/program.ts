@@ -97,8 +97,12 @@ export function createProgram(ctx: CommandContext): Command {
     .command("init")
     .description("Create a ripple.config.json with the default settings")
     .option("-f, --force", "overwrite an existing config file")
+    .option("--no-color", "disable ANSI colors")
     .action(async (options: Record<string, unknown>) => {
-      const exitCode = await initCommand({ force: Boolean(options.force) }, ctx);
+      const exitCode = await initCommand(
+        { force: Boolean(options.force), color: options.color as boolean | undefined },
+        ctx,
+      );
       if (exitCode !== ExitCode.Success) {
         throw new ExitError(exitCode);
       }
@@ -110,6 +114,11 @@ export function createProgram(ctx: CommandContext): Command {
     .action(() => {
       ctx.writer.writeLine(ctx.version);
     });
+
+  program.addHelpText(
+    "beforeAll",
+    `ripple — dependency impact analysis for TypeScript and JavaScript\n`,
+  );
 
   return program;
 }

@@ -1,9 +1,14 @@
 import path from "node:path";
+import chalk from "chalk";
 import { loadConfig, loadProjectContext } from "../config/loader.js";
 import { buildGraph } from "../graph/build.js";
 import { createTsProject } from "../parser/ts-project.js";
 import { discoverSourceFiles } from "../scanner/discover.js";
 import { createSpinner } from "../cli/spinner.js";
+import { resolveColor } from "../ui/color.js";
+import { brandHeader } from "../ui/brand.js";
+import { icon } from "../ui/icons.js";
+import { dim, type TextStyle } from "../formatter/text.js";
 import { pathKey } from "../utils/paths.js";
 import { findPackageJson } from "../utils/fs.js";
 import { ExitCode } from "../types/cli.js";
@@ -27,7 +32,9 @@ export async function doctorCommand(
   options: DoctorOptions,
   ctx: CommandContext,
 ): Promise<ExitCode> {
-  const spinner = createSpinner(options.color !== false);
+  const color = resolveColor(options.color);
+  const style: TextStyle = { color };
+  const spinner = createSpinner(color);
   spinner.start("Running diagnostics…");
   const results: CheckResult[] = [];
   const check = (label: string, state: "ok" | "warn" | "fail", detail?: string): void => {
@@ -55,7 +62,7 @@ export async function doctorCommand(
       context = await loadProjectContext(ctx.cwd, options.config);
     } catch (error) {
       check("ripple config", "fail", error instanceof Error ? error.message : String(error));
-      renderResults(results, ctx);
+      renderResults(results, ctx, color);
       return ExitCode.InvalidConfig;
     }
 
@@ -112,24 +119,37 @@ export async function doctorCommand(
     spinner.stop();
   }
 
-  renderResults(results, ctx);
+  renderResults(results, ctx, color);
   const failed = results.some((check) => check.state === "fail");
   const warned = results.some((check) => check.state === "warn");
-  ctx.writer.writeLine(
-    failed
-      ? "✖ Diagnoses found problems."
-      : warned
-        ? "⚠ Diagnoses passed with warnings."
-        : "✓ All checks passed.",
-  );
+  const verdict = failed
+    ? { icon: icon("cross"), text: "Diagnoses found problems.", color: chalk.red }
+    : warned
+      ? { icon: icon("warning"), text: "Diagnoses passed with warnings.", color: chalk.yellow }
+      : { icon: icon("tick"), text: "All checks passed.", color: chalk.green };
+  const verdictIcon = style.color ? verdict.color(verdict.icon) : verdict.icon;
+  ctx.writer.writeLine(`${verdictIcon} ${verdict.text}`);
   return failed ? ExitCode.Failure : ExitCode.Success;
 }
 
-function renderResults(results: CheckResult[], ctx: CommandContext): void {
+function renderResults(results: CheckResult[], ctx: CommandContext, color: boolean): void {
+  const style: TextStyle = { color };
+  ctx.writer.writeLine(brandHeader({ label: "project health check", version: ctx.version, style }));
+  ctx.writer.writeLine();
+
+  const width = Math.max(...results.map((check) => check.label.length));
   for (const check of results) {
-    const icon = check.state === "ok" ? "✓" : check.state === "warn" ? "⚠" : "✖";
-    const suffix = check.detail ? ` ${check.detail}` : "";
-    ctx.writer.writeLine(`${icon} ${check.label}${suffix}`);
+    const stateIcon =
+      check.state === "ok"
+        ? icon("tick")
+        : check.state === "warn"
+          ? icon("warning")
+          : icon("cross");
+    const colored =
+      check.state === "ok" ? chalk.green : check.state === "warn" ? chalk.yellow : chalk.red;
+    const mark = style.color ? colored(stateIcon) : stateIcon;
+    const detail = check.detail ? ` ${dim(check.detail, style)}` : "";
+    ctx.writer.writeLine(`${mark} ${check.label.padEnd(width)}${detail}`);
   }
   ctx.writer.writeLine();
 }

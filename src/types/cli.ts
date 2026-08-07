@@ -41,6 +41,8 @@ export interface DoctorOptions {
 /** Parsed command-line options for `ripple init`. */
 export interface InitOptions {
   force: boolean;
+  /** Whether to emit ANSI colors. `false` when `--no-color` is passed. */
+  color?: boolean;
 }
 
 /** Process exit codes used across commands. */

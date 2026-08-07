@@ -10,16 +10,6 @@ export interface TextStyle {
   color: boolean;
 }
 
-/** Render the wave banner shown at the top of analysis output. */
-export function banner(text: string, style: TextStyle): string {
-  return style.color ? chalk.cyanBright.bold(text) : text;
-}
-
-/** Section title, e.g. `Top Impact`. */
-export function sectionTitle(text: string, style: TextStyle): string {
-  return style.color ? chalk.bold.underline(text) : text;
-}
-
 /** Muted/secondary text, e.g. hints and counts. */
 export function dim(text: string, style: TextStyle): string {
   return style.color ? chalk.dim(text) : text;
@@ -36,6 +26,11 @@ const RISK_COLORS: Record<RiskLevel, (text: string) => string> = {
   HIGH: (text) => chalk.magenta(text),
   CRITICAL: (text) => chalk.red.bold(text),
 };
+
+/** Chalk style function for a risk level. */
+export function riskColor(level: RiskLevel): (text: string) => string {
+  return RISK_COLORS[level];
+}
 
 /** Colored risk level badge, e.g. ` HIGH `. */
 export function riskBadge(level: RiskLevel, style: TextStyle): string {
