@@ -67,7 +67,6 @@ Just deterministic analysis against the code you actually have.
 
 **Know the ripple before you commit.**
 
-
 ## Features
 
 | Feature                      | What it does                                                                                                     |
