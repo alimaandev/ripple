@@ -94,6 +94,10 @@ Everything below is real output against a shipped example project in `tests/fixt
 
 ### Install & verify
 
+> [!NOTE]
+> Ripple is not published to the npm registry yet — this is the canonical
+> install path, straight from the source.
+
 ```bash
 git clone https://github.com/alimaandev/ripple.git
 cd ripple
@@ -214,6 +218,10 @@ Independent health checks — config validity, tsconfig presence, source
 discovery, parse rate, import resolution, cycles. A failed check is reported
 but doesn't abort the run; the command exits non-zero if anything fails.
 
+> [!TIP]
+> Run `ripple doctor` before your first analysis — it fails fast on config
+> and resolution problems and tells you exactly what to fix.
+
 ```text
 $ ripple doctor
 ✓ Node.js runtime v22.11.0
@@ -285,8 +293,12 @@ counts are log-scaled so a big graph can never drown out the signal:
 | API routes impacted             | 0.10   |
 | Target in a circular dependency | 0.10   |
 
-That yields a score from 0–100 and a level:
-**LOW → MEDIUM → HIGH → CRITICAL**, at thresholds 30, 55, 80.
+That yields a score from 0–100 and a level at thresholds 30, 55, 80 — the
+same colors the CLI prints on your terminal:
+
+<p align="center">
+  <img src="assets/risk-levels.svg" alt="Risk levels: LOW, MEDIUM, HIGH, CRITICAL" title="Risk levels" width="440" />
+</p>
 
 Confidence (0–100) is separate — how trustworthy the analysis is. It drops
 when files fail to parse or imports stay unresolved, and takes a penalty if
@@ -359,9 +371,10 @@ error-tolerant recovery, `graph/` resolves specifiers and detects cycles, and
 }
 ```
 
-The contract is additive-only — new fields may be added, but existing field
-names and shapes never change without a major version bump. `graph --json`
-follows the same convention.
+> [!IMPORTANT]
+> The contract is additive-only — existing field names and shapes never
+> change without a major version bump. `graph --json` follows the same
+> convention.
 
 ### Use it in CI
 
@@ -385,27 +398,32 @@ fi
 
 **Why is confidence below 100%?**
 
-Confidence drops when files fail to parse or imports stay unresolved — those
-are the two signals that make an analysis less trustworthy. Run `ripple
-doctor` to see exactly which checks are failing.
+> [!WARNING]
+> Confidence drops when files fail to parse or imports stay unresolved — the
+> two signals that make an analysis less trustworthy. Run `ripple doctor` to
+> see exactly which checks are failing.
 
 **Why do `.css` or package imports appear in the report?**
 
-Non-source imports (styles, assets, npm packages) are classified as external.
-They appear in the graph (see `External` in `ripple graph`) but are never
-counted as affected files — you can't "break" a package by changing local
-code.
+> [!NOTE]
+> Non-source imports (styles, assets, npm packages) are classified as
+> external. They appear in the graph (see `External` in `ripple graph`) but
+> are never counted as affected files — you can't "break" a package by
+> changing local code.
 
 **Why are `node_modules` files never analyzed?**
 
-`node_modules` is always excluded, even if your config adds it to `include`.
-Analyzing installed packages would only add noise to your blast radius.
+> [!NOTE]
+> `node_modules` is always excluded, even if your config adds it to
+> `include`. Analyzing installed packages would only add noise to your blast
+> radius.
 
 **Does Ripple work on Windows?**
 
-Yes — path handling is platform-aware. Integration tests run on Linux CI, and
-development happens on Windows; both report the same results from the same
-fixtures.
+> [!TIP]
+> Yes — path handling is platform-aware. Integration tests run on Linux CI,
+> and development happens on Windows; both report the same results from the
+> same fixtures.
 
 ## Exit codes
 

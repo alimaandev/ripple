@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="532" height="34" viewBox="0 0 532 34" role="img" aria-labelledby="title">
+  <title id="title">Risk levels: LOW, MEDIUM, HIGH, CRITICAL</title>
+  <rect x="0" y="2" width="124" height="30" rx="6" fill="#2ea043"/>
+  <text x="62" y="23" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff">LOW</text>
+  <rect x="136" y="2" width="124" height="30" rx="6" fill="#d29922"/>
+  <text x="198" y="23" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1f2328">MEDIUM</text>
+  <rect x="272" y="2" width="124" height="30" rx="6" fill="#bc8cff"/>
+  <text x="334" y="23" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1f2328">HIGH</text>
+  <rect x="408" y="2" width="124" height="30" rx="6" fill="#f85149"/>
+  <text x="470" y="23" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff">CRITICAL</text>
+</svg>
