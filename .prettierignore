@@ -1,0 +1,9 @@
+dist
+node_modules
+coverage
+pnpm-lock.yaml
+LICENSE
+*.docx
+tests/fixtures
+.github
+examples
