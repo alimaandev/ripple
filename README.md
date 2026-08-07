@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="assets/ripple-logo.png" alt="Ripple" width="120" />
+  <img src="https://raw.githubusercontent.com/alimaandev/ripple/main/assets/ripple-logo.png" alt="Ripple" width="120" />
 
 # Ripple
 
@@ -18,7 +18,7 @@ Change less. Break less. Know the blast radius of any file before you touch it.
 
   <pre><code>npm install -g @alimaandev/ripple</code></pre>
 
-  <img src="assets/hero.svg" alt="Terminal output of `ripple analyze` — risk, affected files, routes, components, tests, and confidence score" title="ripple analyze" width="100%" />
+  <img src="https://raw.githubusercontent.com/alimaandev/ripple/main/assets/hero.svg" alt="Terminal output of `ripple analyze` — risk, affected files, routes, components, tests, and confidence score" title="ripple analyze" width="100%" />
 
 </div>
 
@@ -296,7 +296,7 @@ That yields a score from 0–100 and a level at thresholds 30, 55, 80 — the
 same colors the CLI prints on your terminal:
 
 <p align="center">
-  <img src="assets/risk-levels.svg" alt="Risk levels: LOW, MEDIUM, HIGH, CRITICAL" title="Risk levels" width="440" />
+  <img src="https://raw.githubusercontent.com/alimaandev/ripple/main/assets/risk-levels.svg" alt="Risk levels: LOW, MEDIUM, HIGH, CRITICAL" title="Risk levels" width="440" />
 </p>
 
 Confidence (0–100) is separate — how trustworthy the analysis is. It drops

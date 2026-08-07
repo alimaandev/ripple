@@ -1,7 +1,10 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/cli/bin.ts"],
+  entry: {
+    bin: "src/cli/bin.ts",
+    index: "src/index.ts",
+  },
   format: ["esm"],
   target: "node22",
   platform: "node",
@@ -9,6 +12,7 @@ export default defineConfig({
   sourcemap: true,
   treeshake: true,
   minify: false,
+  dts: true,
   outDir: "dist",
   banner: {
     js: "#!/usr/bin/env node",

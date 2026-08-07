@@ -21,6 +21,18 @@
     "url": "https://github.com/alimaandev/ripple/issues"
   },
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "ripple": "./dist/bin.js"
   },
