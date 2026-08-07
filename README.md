@@ -100,6 +100,41 @@ Affected Files (7)
 └─ src/main.ts (depth 2)
 ```
 
+### See more of the project
+
+`ripple graph` gives a project-wide overview:
+
+```bash
+cd tests/fixtures/basic
+ripple graph
+```
+
+```text
+🌊 Dependency Graph
+
+Files            25
+Edges            28
+External         4
+Unresolved       0
+Circular groups  1
+
+Circular Dependencies
+⭕ src/circular/a.ts → src/circular/c.ts → src/circular/b.ts → src/circular/a.ts
+```
+
+Point it at a file to see its dependency tree — forwards (what it imports)
+or, with `-r`, backwards (what imports it):
+
+```bash
+ripple graph src/circular/b.ts -r
+```
+
+```text
+Dependents (reverse)
+├─ src/circular/c.ts
+└─ src/circular/a.ts
+```
+
 ## CLI reference
 
 ```text
@@ -218,6 +253,27 @@ when files fail to parse or imports stay unresolved, and takes a penalty if
 the target sits inside a cycle. Use it to gate merges in CI, not just to look
 at pretty numbers.
 
+## How it works
+
+Ripple is a small pipeline: discover source files, parse their imports in a
+real TypeScript project, build the dependency graph, then answer questions
+against it. Risk and confidence are derived from that same graph — never from
+heuristics invented on the fly.
+
+```mermaid
+flowchart LR
+    A[Scanner] --> B[Parser]
+    B --> C[Graph]
+    C --> D[Reverse traversal]
+    D --> E[Risk + confidence]
+    E --> F[Terminal or JSON report]
+```
+
+The pieces map to the source tree: `scanner/` discovers files from your
+`include`/`ignore` globs, `parser/` extracts imports and exports with
+error-tolerant recovery, `graph/` resolves specifiers and detects cycles, and
+`risk/` turns graph signals into the score you see in the report.
+
 ## JSON output (for CI)
 
 `ripple analyze --json` emits a stable, versioned contract:
@@ -266,6 +322,50 @@ at pretty numbers.
 The contract is additive-only — new fields may be added, but existing field
 names and shapes never change without a major version bump. `graph --json`
 follows the same convention.
+
+### Use it in CI
+
+```bash
+ripple analyze src/authentication/login.ts --json | jq -r .risk.level
+# MEDIUM
+```
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+level="$(ripple analyze "$1" --json | jq -r .risk.level)"
+if [ "$level" = "CRITICAL" ]; then
+  echo "CRITICAL impact — review before merging" >&2
+  exit 1
+fi
+```
+
+## FAQ
+
+**Why is confidence below 100%?**
+
+Confidence drops when files fail to parse or imports stay unresolved — those
+are the two signals that make an analysis less trustworthy. Run `ripple
+doctor` to see exactly which checks are failing.
+
+**Why do `.css` or package imports appear in the report?**
+
+Non-source imports (styles, assets, npm packages) are classified as external.
+They appear in the graph (see `External` in `ripple graph`) but are never
+counted as affected files — you can't "break" a package by changing local
+code.
+
+**Why are `node_modules` files never analyzed?**
+
+`node_modules` is always excluded, even if your config adds it to `include`.
+Analyzing installed packages would only add noise to your blast radius.
+
+**Does Ripple work on Windows?**
+
+Yes — path handling is platform-aware. Integration tests run on Linux CI, and
+development happens on Windows; both report the same results from the same
+fixtures.
 
 ## Exit codes
 
