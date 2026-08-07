@@ -1,95 +1,70 @@
-<p align="center">
-  <img src="assets/ripple-logo.png?v=3" alt="Ripple logo" width="160">
-</p>
+<div align="center">
 
-<h1 align="center">Ripple</h1>
+  <img src="assets/ripple-logo.png" alt="Ripple" width="120" />
 
-<p align="center">
-  Dependency impact analysis for TypeScript and JavaScript projects.
-  Before you change a file, Ripple tells you what else breaks.
-</p>
+# Ripple
 
-<p align="center">
-  <a href="https://github.com/alimaandev/ripple/actions/workflows/ci.yml">
-    <img alt="CI" src="https://github.com/alimaandev/ripple/actions/workflows/ci.yml/badge.svg">
-  </a>
-  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg">
-  <img alt="Node: >= 22" src="https://img.shields.io/badge/node-%3E%3D22-339933.svg">
-</p>
+**Dependency impact analysis for TypeScript and JavaScript.**
 
----
+Change less. Break less. Know the blast radius of any file before you touch it.
+
+  <p align="center">
+    &nbsp;<a href="https://github.com/alimaandev/ripple/actions/workflows/ci.yml"><img alt="CI build" src="https://img.shields.io/github/actions/workflow/status/alimaandev/ripple/ci.yml?branch=main&logo=githubactions&logoColor=white&label=CI%20build&style=for-the-badge"/></a>&nbsp;
+    &nbsp;<a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/alimaandev/ripple?label=License&style=for-the-badge"/></a>&nbsp;
+    &nbsp;<a href="package.json"><img alt="Node.js >= 22" src="https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=nodedotjs&logoColor=white&style=for-the-badge"/></a>&nbsp;
+  </p>
+
+  <img src="assets/hero.svg" alt="Terminal output of `ripple analyze` — risk, affected files, routes, components, tests, and confidence score" title="ripple analyze" width="100%" />
+
+</div>
 
 ## Why Ripple?
 
-Changing a file in a non-trivial codebase raises a simple question that most
-tooling cannot answer:
+In any non-trivial codebase there is one question that most tooling refuses to answer:
 
-> Who imports this file, directly and transitively — and how much does it
-> matter?
+> Who imports this file — directly and transitively — and how much does it matter?
 
-Grepping imports breaks down past one hop. Package managers tell you about
-dependencies, not dependents. Refactoring is often stalled by not knowing the
-blast radius.
+`grep` stops at one hop. Package managers track dependencies, never dependents. So refactors stall because the blast radius is a guess. Ripple builds the real import graph of your project once, then answers the question in a single command: a reverse dependency walk, a transparent 0–100 risk score, and the exact list of what breaks — routes, components, tests, entry points, and any circular dependencies involved.
 
-Ripple builds the full import graph of your project once, then answers the
-question in one command: a dependency walk, a risk score, and a list of
-everything affected — routes, components, tests, entry points, and any
-circular dependencies involved. It is deterministic, offline, and runs
-against the code you actually have.
+Deterministic. Offline. No heuristic page ranks, no network calls, no telemetry. Against the code you actually have.
 
 ## Features
 
-- **Reverse dependency traversal** — find every file that imports a target,
-  transitively, with depth, capped via `--depth`.
-- **Risk scoring** — a transparent 0–100 score from seven weighted signals
-  (see [Risk scoring](#risk-scoring)), with a per-factor breakdown in
-  `--verbose`.
-- **Circular dependency detection** — strongly-connected components with a
-  concrete cycle path (`a → c → b → a`).
-- **Path alias support** — tsconfig `paths` and custom aliases
-  (`{ "@": "./src" }`), including single-wildcard patterns.
-- **Real-world import resolution** — extension probing, index files, `.js` →
-  `.ts` rewriting, dynamic `import()`, `require()`, `export … from`, and
-  `import = require`. Non-source imports (`.css`, packages) are classified as
-  external, not broken.
-- **Entry-point detection** — `package.json` `main`/`bin` plus conventional
-  root and `src` entry files.
-- **File categorization** — routes, pages, layouts, components, utilities,
-  and tests detected by path conventions.
-- **Terminal and JSON output** — a readable report by default, a stable
-  machine-readable contract with `--json`.
-- **Error-tolerant parsing** — a broken file degrades the confidence score
-  instead of aborting the run.
-- **Deterministic and offline** — no network calls, no non-deterministic
-  ordering, same input → same output.
+| Feature                      | What it does                                                                                                     |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| **Impact analysis**          | Reverse dependency traversal, transitively, with depth caps. Know who imports a target file.                     |
+| **Risk scoring**             | A transparent 0–100 score from seven weighted signals, with a per-factor breakdown in `--verbose`.               |
+| **Cycle detection**          | Strongly-connected components with a concrete cycle path — `a → c → b → a`, not just a list of names.            |
+| **Alias & path support**     | tsconfig `paths` and custom aliases like `{ "@": "./src" }`, including single-wildcard patterns.                 |
+| **Real-world resolution**    | Extension probing, index files, `.js` → `.ts` rewriting, dynamic `import()`, `require()`, `export … from`.       |
+| **Categorized results**      | Routes, layouts, components, utilities, and tests detected by path conventions — not a raw string of file names. |
+| **Entry-point intelligence** | `package.json` `main`/`bin` plus conventional root and `src` entry files, flagged in the report.                 |
+| **Stable JSON contract**     | A machine-readable report for CI gates, dashboards, and tooling — additive-only compatibility.                   |
+| **Error-tolerant parsing**   | A broken file lowers confidence instead of aborting the run. No false precision.                                 |
+| **Deterministic & offline**  | Same input, same output, every time. No hidden network dependency.                                               |
 
 ## Quick start
+
+Everything below is real output against a shipped example project in `tests/fixtures/basic`.
 
 ### Requirements
 
 - Node.js ≥ 22
-- pnpm (repo uses pnpm 11)
+- pnpm 11+
 
-### Install from source
+### Install & verify
 
 ```bash
 git clone https://github.com/alimaandev/ripple.git
 cd ripple
 pnpm install
-pnpm build
-npm link        # exposes the global `ripple` binary
+pnpm build                      # bundles dist/bin.js via tsup
+npm link                        # exposes the global `ripple` binary
+
+ripple version                  # → 0.1.0
 ```
 
-Verify:
-
-```bash
-ripple version
-```
-
-### Run it
-
-Ripple ships a complete sample project in `tests/fixtures/basic`. Point the
-CLI at it:
+### Run your first analysis
 
 ```bash
 cd tests/fixtures/basic
@@ -125,131 +100,179 @@ Affected Files (7)
 └─ src/main.ts (depth 2)
 ```
 
-## Usage
+## CLI reference
 
 ```text
-ripple [command]
-
-Commands:
-  analyze <file>   Impact analysis of a file
-  graph [file]     Project stats, or one file's dependency tree
-  doctor           Project and environment health check
-  init             Create a ripple.config.json
-  version          Print the version
+ripple <command> [options]
 ```
 
-### `ripple analyze <file>`
+| Command          | Description                                       |
+| ---------------- | ------------------------------------------------- |
+| `analyze <file>` | Impact analysis for a target file                 |
+| `graph [file]`   | Project stats, or a single file's dependency tree |
+| `doctor`         | Project and environment health check              |
+| `init`           | Scaffold a `ripple.config.json`                   |
+| `version`        | Print the current version                         |
 
-| Flag                  | Description                                         |
-| --------------------- | --------------------------------------------------- |
-| `-j, --json`          | Emit the JSON report instead of the terminal report |
-| `-v, --verbose`       | Include the risk-factor point breakdown             |
-| `-d, --depth <n>`     | Cap the reverse traversal at `n` levels             |
-| `-c, --config <path>` | Use a specific config file                          |
-| `--no-color`          | Disable ANSI colors                                 |
+### Options
 
-### `ripple graph [file]`
-
-Without a file: project-wide stats and circular dependencies. With a file:
-the file's import tree.
-
-| Flag                  | Description                                                   |
-| --------------------- | ------------------------------------------------------------- |
-| `-j, --json`          | Emit the JSON report                                          |
-| `-r, --reverse`       | Show dependents (what imports the file) instead of dependants |
-| `-d, --depth <n>`     | Cap tree depth                                                |
-| `-c, --config <path>` | Use a specific config file                                    |
-| `--no-color`          | Disable ANSI colors                                           |
+| Command   | Flag                  | Description                                                      |
+| --------- | --------------------- | ---------------------------------------------------------------- |
+| `analyze` | `-j, --json`          | Emit the JSON report instead of the terminal report              |
+| `analyze` | `-v, --verbose`       | Include the risk-factor point breakdown                          |
+| `analyze` | `-d, --depth <n>`     | Cap the reverse traversal at `n` levels                          |
+| `analyze` | `-c, --config <path>` | Use a specific config file                                       |
+| `analyze` | `--no-color`          | Disable ANSI colors                                              |
+| `graph`   | `-j, --json`          | Emit the JSON report                                             |
+| `graph`   | `-r, --reverse`       | Show dependents (what imports this file) instead of dependencies |
+| `graph`   | `-d, --depth <n>`     | Cap tree depth                                                   |
+| `graph`   | `-c, --config <path>` | Use a specific config file                                       |
+| `graph`   | `--no-color`          | Disable ANSI colors                                              |
+| `doctor`  | `-c, --config <path>` | Use a specific config file                                       |
+| `doctor`  | `-v, --verbose`       | Verbose output                                                   |
+| `doctor`  | `--no-color`          | Disable ANSI colors                                              |
+| `init`    | `-f, --force`         | Overwrite an existing config                                     |
 
 ### `ripple doctor`
 
-Runs independent health checks — config validity, tsconfig presence, source
-discovery, parse rate, unresolved imports, cycles. Exits non-zero when any
-check fails.
+Independent health checks — config validity, tsconfig presence, source
+discovery, parse rate, import resolution, cycles. A failed check is reported
+but doesn't abort the run; the command exits non-zero if anything fails.
+
+```text
+$ ripple doctor
+✓ Node.js runtime v22.11.0
+✓ package.json package.json
+✓ ripple config ripple.config.json
+✓ tsconfig.json tsconfig.json
+✓ source files 25 discovered
+✓ path aliases 1 configured
+✓ parse all files parsed cleanly
+✓ import resolution all internal imports resolved
+⚠ circular dependencies 1 cycle group(s)
+⚠ Diagnoses passed with warnings.
+```
 
 ### `ripple init`
 
-Writes `ripple.config.json` with the defaults. `-f, --force` overwrites an
-existing file.
+Writes `ripple.config.json` with the recommended defaults, ready to edit.
 
 ## Configuration
 
-Ripple discovers `ripple.config.ts`, `.mjs`, `.js`, `.cjs`, or `.json` in the
-current directory. An explicit `--config <path>` wins; the config's directory
-becomes the project root. Every field is optional.
+Ripple discovers `ripple.config.ts`, `.js`, `.cjs`, `.mjs`, or `.json` in the
+current directory, or from `--config <path>`. Your file is merged over the
+defaults — every field is optional.
 
-```ts
-// ripple.config.ts
-export default {
-  include: ["src/**/*.{ts,tsx}"],
-  ignore: ["src/generated"],
-  aliases: { "@": "./src" },
-};
+```json
+{
+  "include": ["**/*.{ts,tsx,js,jsx}"],
+  "ignore": ["node_modules", "dist", "build", "coverage", ".next", "out"],
+  "aliases": { "@": "./src" },
+  "tsconfigPath": "tsconfig.json",
+  "risk": {
+    "weights": {
+      "affectedFiles": 0.3,
+      "entryPoint": 0.15,
+      "sharedUtility": 0.15,
+      "publicExports": 0.1,
+      "tests": 0.1,
+      "routes": 0.1,
+      "cycleMembership": 0.1
+    },
+    "thresholds": { "medium": 30, "high": 55, "critical": 80 }
+  }
+}
 ```
 
-| Field             | Default                                                             | Purpose                                                |
-| ----------------- | ------------------------------------------------------------------- | ------------------------------------------------------ |
-| `include`         | `**/*.{ts,tsx,js,jsx}`                                              | Source globs to analyze                                |
-| `ignore`          | `node_modules`, `dist`, `build`, `coverage`, `.next`, `out`, `.git` | Exclusions                                             |
-| `aliases`         | `{}`                                                                | Path aliases, merged with tsconfig `paths` (user wins) |
-| `tsconfigPath`    | `tsconfig.json`                                                     | tsconfig to read for `paths`                           |
-| `risk.weights`    | see below                                                           | Risk signal weights                                    |
-| `risk.thresholds` | 30 / 55 / 80                                                        | Score thresholds for MEDIUM / HIGH / CRITICAL          |
+| Field             | Default                                                     | Purpose                                                |
+| ----------------- | ----------------------------------------------------------- | ------------------------------------------------------ |
+| `include`         | `**/*.{ts,tsx,js,jsx}`                                      | Source globs to analyze                                |
+| `ignore`          | `node_modules`, `dist`, `build`, `coverage`, `.next`, `out` | Exclusions                                             |
+| `aliases`         | `{}`                                                        | Path aliases, merged with tsconfig `paths` (user wins) |
+| `tsconfigPath`    | `tsconfig.json`                                             | tsconfig to read for `paths`                           |
+| `risk.weights`    | see example                                                 | Risk signal weights                                    |
+| `risk.thresholds` | 30 / 55 / 80                                                | Score thresholds for MEDIUM / HIGH / CRITICAL          |
 
 `node_modules` is always excluded, regardless of config.
 
 ## Risk scoring
 
-The score is a weighted sum of seven signals, each normalized to 0–1.
-Affected counts are log-scaled so large graphs cannot dominate:
+The score is a weighted sum of seven signals, normalized to 0–1. Affected
+counts are log-scaled so a big graph can never drown out the signal:
 
 | Signal                          | Weight |
 | ------------------------------- | ------ |
 | Affected files                  | 0.30   |
 | Entry point impacted            | 0.15   |
 | Shared utilities impacted       | 0.15   |
-| Target's public export surface  | 0.10   |
+| Target public export surface    | 0.10   |
 | Tests impacted                  | 0.10   |
 | API routes impacted             | 0.10   |
 | Target in a circular dependency | 0.10   |
 
-The result is a score (0–100) and a level: LOW, MEDIUM, HIGH, or CRITICAL.
-`ripple analyze <file> --verbose` prints the point-by-point breakdown.
-Weights and thresholds are configurable under `risk`.
+That yields a score from 0–100 and a level:
+**LOW → MEDIUM → HIGH → CRITICAL**, at thresholds 30, 55, 80.
 
-Confidence (0–100) is a separate measure of how trustworthy the analysis is:
-it drops when files fail to parse or imports stay unresolved, and is
-penalized when the target is inside a cycle.
+Confidence (0–100) is separate — how trustworthy the analysis is. It drops
+when files fail to parse or imports stay unresolved, and takes a penalty if
+the target sits inside a cycle. Use it to gate merges in CI, not just to look
+at pretty numbers.
 
-## JSON output
+## JSON output (for CI)
 
-`ripple analyze --json` emits a stable contract — additive changes only,
-renames require a major version bump:
+`ripple analyze --json` emits a stable, versioned contract:
 
-```jsonc
+```json
 {
   "tool": "ripple",
   "version": "0.1.0",
   "command": "analyze",
   "file": "src/authentication/login.ts",
-  "risk": { "score": 34.69, "level": "MEDIUM", "factors": [] },
-  "summary": { "affectedFiles": 7, "routes": 4, "components": 2, "tests": 1 },
-  "affected": [{ "path": "src/main.ts", "depth": 2, "inCycle": false }],
-  "cycles": [{ "members": [], "path": [] }],
+  "risk": { "score": 34.4, "level": "MEDIUM", "factors": [] },
+  "summary": {
+    "affectedFiles": 7,
+    "routes": 4,
+    "components": 2,
+    "entries": 1,
+    "tests": 1,
+    "utilities": 0,
+    "maxDepth": 2,
+    "confidence": 100,
+    "topImpact": [
+      { "label": "Dashboard", "count": 2 },
+      { "label": "Admin", "count": 1 }
+    ]
+  },
+  "affected": [
+    {
+      "path": "src/admin/page.tsx",
+      "depth": 1,
+      "direct": true,
+      "categories": ["route"],
+      "inCycle": false
+    }
+  ],
+  "cycles": [
+    {
+      "members": ["src/circular/a.ts", "src/circular/b.ts", "src/circular/c.ts"],
+      "path": ["src/circular/a.ts", "src/circular/c.ts", "src/circular/b.ts", "src/circular/a.ts"]
+    }
+  ],
   "targetInCycle": false,
-  "durationMs": 42,
+  "durationMs": 242
 }
 ```
 
-Paths are project-relative. `graph --json` follows the same shape for its
-fields.
+The contract is additive-only — new fields may be added, but existing field
+names and shapes never change without a major version bump. `graph --json`
+follows the same convention.
 
 ## Exit codes
 
 | Code | Meaning                   |
 | ---- | ------------------------- |
 | `0`  | Success                   |
-| `1`  | Failure                   |
+| `1`  | General failure           |
 | `2`  | Target file not found     |
 | `3`  | Config missing or invalid |
 
@@ -257,18 +280,18 @@ fields.
 
 ```bash
 pnpm install
-pnpm run dev          # tsup watch mode
-pnpm run typecheck    # tsc --noEmit
-pnpm run lint         # eslint
-pnpm run format:check # prettier
-pnpm run test         # unit + integration tests
-pnpm run build        # bundle dist/bin.js
+pnpm run dev            # watch-mode rebuild via tsup
+pnpm run typecheck      # tsc --noEmit
+pnpm run lint           # eslint
+pnpm run lint:fix       # eslint --fix
+pnpm run format         # prettier --write
+pnpm run test           # vitest run
+pnpm run test:watch     # vitest
+pnpm run build          # tsup
 ```
 
-The repository layout, design decisions, and the analysis pipeline are
-documented in [docs/architecture.md](docs/architecture.md). Before touching
-code, read [CONTRIBUTING.md](CONTRIBUTING.md) — especially the note about
-`tests/fixtures/basic`, which dozens of tests depend on.
+Architecture and design decisions live in [docs/architecture.md](docs/architecture.md).
+Before contributing, read [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
