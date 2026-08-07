@@ -1,5 +1,5 @@
 {
-  "name": "ripple-cli",
+  "name": "@alimaandev/ripple",
   "version": "0.1.0",
   "description": "Dependency impact analysis for TypeScript projects. Answers the question: what will break if I change this file?",
   "keywords": [
@@ -11,6 +11,15 @@
     "risk"
   ],
   "license": "MIT",
+  "author": "Ali Sher <alishermaan0319@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alimaandev/ripple.git"
+  },
+  "homepage": "https://github.com/alimaandev/ripple#readme",
+  "bugs": {
+    "url": "https://github.com/alimaandev/ripple/issues"
+  },
   "type": "module",
   "bin": {
     "ripple": "./dist/bin.js"

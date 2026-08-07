@@ -9,6 +9,8 @@
 Change less. Break less. Know the blast radius of any file before you touch it.
 
   <p align="center">
+    &nbsp;<a href="https://www.npmjs.com/package/@alimaandev/ripple"><img alt="npm version" src="https://img.shields.io/npm/v/@alimaandev/ripple?logo=npm&logoColor=white&label=npm&style=for-the-badge"/></a>&nbsp;
+    &nbsp;<a href="https://www.npmjs.com/package/@alimaandev/ripple"><img alt="npm downloads" src="https://img.shields.io/npm/dm/@alimaandev/ripple?label=downloads&style=for-the-badge"/></a>&nbsp;
     &nbsp;<a href="https://github.com/alimaandev/ripple/actions/workflows/ci.yml"><img alt="CI build" src="https://img.shields.io/github/actions/workflow/status/alimaandev/ripple/ci.yml?branch=main&logo=githubactions&logoColor=white&label=CI%20build&style=for-the-badge"/></a>&nbsp;
     &nbsp;<a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/alimaandev/ripple?label=License&style=for-the-badge"/></a>&nbsp;
     &nbsp;<a href="package.json"><img alt="Node.js >= 22" src="https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=nodedotjs&logoColor=white&style=for-the-badge"/></a>&nbsp;
@@ -20,7 +22,7 @@ Change less. Break less. Know the blast radius of any file before you touch it.
 
 ## Why Ripple
 
-### The question your tooling doesn't answer.
+### The question your tooling doesn't answer
 
 In any non-trivial codebase, there is a deceptively simple question:
 
@@ -87,9 +89,13 @@ Everything below is real output against a shipped example project in `tests/fixt
 
 ### Install & verify
 
-> [!NOTE]
-> Ripple is not published to the npm registry yet — this is the canonical
-> install path, straight from the source.
+```bash
+npm install -g @alimaandev/ripple
+
+ripple version                  # → 0.1.0
+```
+
+Or install from source:
 
 ```bash
 git clone https://github.com/alimaandev/ripple.git
@@ -97,8 +103,6 @@ cd ripple
 pnpm install
 pnpm build                      # bundles dist/bin.js via tsup
 npm link                        # exposes the global `ripple` binary
-
-ripple version                  # → 0.1.0
 ```
 
 ### Run your first analysis

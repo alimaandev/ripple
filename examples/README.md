@@ -56,7 +56,7 @@ $ ripple analyze src/authentication/login.ts
 $ ripple analyze src/circular/a.ts --json | jq .risk
 
 {
-  "score": 21.5,
+  "score": 18.14,
   "level": "LOW",
   "factors": [ ... ]
 }
