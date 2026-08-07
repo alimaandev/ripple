@@ -16,6 +16,8 @@ Change less. Break less. Know the blast radius of any file before you touch it.
     &nbsp;<a href="package.json"><img alt="Node.js >= 22" src="https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=nodedotjs&logoColor=white&style=for-the-badge"/></a>&nbsp;
   </p>
 
+  <pre><code>npm install -g @alimaandev/ripple</code></pre>
+
   <img src="assets/hero.svg" alt="Terminal output of `ripple analyze` — risk, affected files, routes, components, tests, and confidence score" title="ripple analyze" width="100%" />
 
 </div>
@@ -447,6 +449,13 @@ pnpm run build          # tsup
 
 Architecture and design decisions live in [docs/architecture.md](docs/architecture.md).
 Before contributing, read [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Get started
+
+```bash
+npm install -g @alimaandev/ripple
+ripple analyze src/your-file.ts --json | jq -r .risk.level   # MEDIUM, HIGH, ...
+```
 
 ## License
 
