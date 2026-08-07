@@ -18,15 +18,55 @@ Change less. Break less. Know the blast radius of any file before you touch it.
 
 </div>
 
-## Why Ripple?
+## Why Ripple
 
-In any non-trivial codebase there is one question that most tooling refuses to answer:
+### The question your tooling doesn't answer.
 
-> Who imports this file — directly and transitively — and how much does it matter?
+In any non-trivial codebase, there is a deceptively simple question:
 
-`grep` stops at one hop. Package managers track dependencies, never dependents. So refactors stall because the blast radius is a guess. Ripple builds the real import graph of your project once, then answers the question in a single command: a reverse dependency walk, a transparent 0–100 risk score, and the exact list of what breaks — routes, components, tests, entry points, and any circular dependencies involved.
+> **If I change this file, what else could break?**
 
-Deterministic. Offline. No heuristic page ranks, no network calls, no telemetry. Against the code you actually have.
+Most developer tooling stops short.
+
+`grep` finds text. Package managers track dependencies, not dependents. Traditional import graphs show what a file uses—not everything that relies on it.
+
+So the blast radius of a change becomes a guess.
+
+**Ripple makes it explicit.**
+
+It builds the project's import graph once, then walks it in reverse to show exactly how a change propagates through your codebase.
+
+```text
+ripple analyze src/auth/session.ts
+
+42 files affected
+8 routes
+17 tests
+11 components
+
+Risk  78 / 100
+
+session.ts
+    ↓
+auth.ts
+    ↓
+AuthProvider.tsx
+    ↓
+Dashboard.tsx
+```
+
+No black box.
+
+No cloud processing.
+
+No telemetry.
+
+No network calls.
+
+Just deterministic analysis against the code you actually have.
+
+**Know the ripple before you commit.**
+
 
 ## Features
 
