@@ -20,7 +20,7 @@ plus whether your target is hiding inside a circular dependency.
 
 File            src/authentication/login.ts
 Risk            MEDIUM
-Affected Files  7 files
+Affected Files:  7 files
 Components      2
 API Routes      4
 Tests           1
