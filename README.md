@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/ripple-logo.png" alt="Ripple logo" width="160">
+</p>
+
 # 🌊 Ripple
 
 A dependency-impact analysis CLI for TypeScript and JavaScript projects.
