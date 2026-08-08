@@ -4,6 +4,19 @@ All notable changes to Ripple are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-08-08
+
+### Added
+
+- `ripple diff --format github` — GitHub Actions workflow-command output.
+  Each changed source file becomes a PR annotation on the Files tab:
+  `::error` when it blocks the gate, `::warning` otherwise, plus a
+  `::notice` gate verdict. The exit code still carries the verdict.
+- `--format <terminal|json|github>` replaces the JSON-only switch;
+  `--json` remains as shorthand for `--format json`.
+- Unit tests for the annotation builder (levels, escaping, pluralization)
+  and integration tests for the workflow output and `--format` validation.
+
 ## [0.4.0] - 2026-08-08
 
 ### Added

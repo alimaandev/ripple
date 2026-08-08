@@ -45,10 +45,15 @@ export interface InitOptions {
   color?: boolean;
 }
 
+/** Supported output formats for `ripple diff`. */
+export type DiffFormat = "terminal" | "json" | "github";
+
 /** Parsed command-line options for `ripple diff`. */
 export interface DiffOptions {
   json: boolean;
   verbose: boolean;
+  /** Output format; `json` falls back to `--json` parsing. */
+  format?: DiffFormat;
   /** Whether to emit ANSI colors. `false` when `--no-color` is passed. */
   color?: boolean;
   /** Git ref to compute the change set against. */

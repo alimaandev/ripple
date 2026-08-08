@@ -303,6 +303,29 @@ describe("ripple diff", () => {
     expect(report.gate.level).toBe("medium");
   });
 
+  diffIt("emits github workflow annotations", { timeout: 90_000 }, () => {
+    const dir = gitRepo();
+    writeTree(dir);
+    fs.writeFileSync(
+      path.join(dir, "src", "b.ts"),
+      'import { a } from "./a";\nexport const b = a + 1;\nexport const g = a * 2;\n',
+    );
+
+    const result = runCli(["diff", "--format", "github", "--gate", "critical"], dir);
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain("::warning file=src/b.ts,title=Ripple LOW");
+    expect(result.stdout).toContain("::notice title=Ripple diff critical gate");
+    expect(result.stdout).toContain("Gate passed");
+  });
+
+  diffIt("rejects unknown --format values", { timeout: 90_000 }, () => {
+    const dir = gitRepo();
+    writeTree(dir);
+    const result = runCli(["diff", "--format", "xml"], dir);
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain("expected one of terminal | json | github");
+  });
+
   diffIt("renders a terminal report", { timeout: 90_000 }, () => {
     const dir = gitRepo();
     writeTree(dir);
