@@ -36,3 +36,37 @@ export interface GraphJsonReport {
   forward?: string[];
   reverse?: string[];
 }
+
+/** One analyzed file inside a `ripple diff` report. */
+export interface DiffFileReport {
+  /** Git-relative path of the changed file. */
+  file: string;
+  /** Whether the file is part of the analyzed source graph. */
+  analyzed: boolean;
+  risk?: RiskResult;
+  affectedFiles?: number;
+  targetInCycle?: boolean;
+}
+
+/** Minimum risk level that blocks the `ripple diff` gate. */
+export type GateLevel = "medium" | "high" | "critical";
+
+/** Payload emitted by `ripple diff --json`. */
+export interface DiffJsonReport {
+  tool: "ripple";
+  version: string;
+  command: "diff";
+  /** Base ref the change set was computed against. */
+  base: string;
+  /** Total changed files detected by git. */
+  changedFiles: number;
+  /** Per-file analysis, risky files first. */
+  files: DiffFileReport[];
+  gate: {
+    /** Minimum risk level that blocks the gate. */
+    level: GateLevel;
+    blocked: boolean;
+    counts: Record<"low" | "medium" | "high" | "critical", number>;
+  };
+  durationMs: number;
+}

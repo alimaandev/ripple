@@ -16,7 +16,10 @@ Change less. Break less. Know the blast radius of any file before you touch it.
     &nbsp;<a href="package.json"><img alt="Node.js >= 22" src="https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=nodedotjs&logoColor=white&style=for-the-badge"/></a>&nbsp;
   </p>
 
-  <pre><code>npm install -g @alimaandev/ripple</code></pre>
+  <pre><code>npm install -g @alimaandev/ripple
+
+# or try it without installing anything:
+npx @alimaandev/ripple analyze src/your-file.ts</code></pre>
 
   <img src="https://raw.githubusercontent.com/alimaandev/ripple/main/assets/hero.svg" alt="Terminal output of `ripple analyze` — risk, affected files, routes, components, tests, and confidence score" title="ripple analyze" width="100%" />
 
@@ -76,6 +79,7 @@ Just deterministic analysis against the code you actually have.
 | **Categorized results**      | Routes, layouts, components, utilities, and tests detected by path conventions — not a raw string of file names. |
 | **Entry-point intelligence** | `package.json` `main`/`bin` plus conventional root and `src` entry files, flagged in the report.                 |
 | **Stable JSON contract**     | A machine-readable report for CI gates, dashboards, and tooling — additive-only compatibility.                   |
+| **Change-set gating**        | `ripple diff` analyzes every changed file since a base ref and blocks the merge on risky code.                   |
 | **Error-tolerant parsing**   | A broken file lowers confidence instead of aborting the run. No false precision.                                 |
 | **Deterministic & offline**  | Same input, same output, every time. No hidden network dependency.                                               |
 
@@ -108,8 +112,17 @@ npm link                        # exposes the global `ripple` binary
 
 ### Run your first analysis
 
+No install required — `npx` pulls the package from the registry on the fly:
+
 ```bash
 cd tests/fixtures/basic
+npx @alimaandev/ripple analyze src/authentication/login.ts
+```
+
+Once you're sold, install it globally:
+
+```bash
+npm install -g @alimaandev/ripple
 ripple analyze src/authentication/login.ts
 ```
 
@@ -192,28 +205,35 @@ ripple <command> [options]
 | ---------------- | ------------------------------------------------- |
 | `analyze <file>` | Impact analysis for a target file                 |
 | `graph [file]`   | Project stats, or a single file's dependency tree |
+| `diff`           | Gate all files changed since a git base ref       |
 | `doctor`         | Project and environment health check              |
 | `init`           | Scaffold a `ripple.config.json`                   |
 | `version`        | Print the current version                         |
 
 ### Options
 
-| Command   | Flag                  | Description                                                      |
-| --------- | --------------------- | ---------------------------------------------------------------- |
-| `analyze` | `-j, --json`          | Emit the JSON report instead of the terminal report              |
-| `analyze` | `-v, --verbose`       | Include the risk-factor point breakdown                          |
-| `analyze` | `-d, --depth <n>`     | Cap the reverse traversal at `n` levels                          |
-| `analyze` | `-c, --config <path>` | Use a specific config file                                       |
-| `analyze` | `--no-color`          | Disable ANSI colors                                              |
-| `graph`   | `-j, --json`          | Emit the JSON report                                             |
-| `graph`   | `-r, --reverse`       | Show dependents (what imports this file) instead of dependencies |
-| `graph`   | `-d, --depth <n>`     | Cap tree depth                                                   |
-| `graph`   | `-c, --config <path>` | Use a specific config file                                       |
-| `graph`   | `--no-color`          | Disable ANSI colors                                              |
-| `doctor`  | `-c, --config <path>` | Use a specific config file                                       |
-| `doctor`  | `-v, --verbose`       | Verbose output                                                   |
-| `doctor`  | `--no-color`          | Disable ANSI colors                                              |
-| `init`    | `-f, --force`         | Overwrite an existing config                                     |
+| Command   | Flag                  | Description                                                        |
+| --------- | --------------------- | ------------------------------------------------------------------ |
+| `analyze` | `-j, --json`          | Emit the JSON report instead of the terminal report                |
+| `analyze` | `-v, --verbose`       | Include the risk-factor point breakdown                            |
+| `analyze` | `-d, --depth <n>`     | Cap the reverse traversal at `n` levels                            |
+| `analyze` | `-c, --config <path>` | Use a specific config file                                         |
+| `analyze` | `--no-color`          | Disable ANSI colors                                                |
+| `graph`   | `-j, --json`          | Emit the JSON report                                               |
+| `graph`   | `-r, --reverse`       | Show dependents (what imports this file) instead of dependencies   |
+| `graph`   | `-d, --depth <n>`     | Cap tree depth                                                     |
+| `graph`   | `-c, --config <path>` | Use a specific config file                                         |
+| `graph`   | `--no-color`          | Disable ANSI colors                                                |
+| `doctor`  | `-c, --config <path>` | Use a specific config file                                         |
+| `doctor`  | `-v, --verbose`       | Verbose output                                                     |
+| `doctor`  | `--no-color`          | Disable ANSI colors                                                |
+| `init`    | `-f, --force`         | Overwrite an existing config                                       |
+| `diff`    | `-j, --json`          | Emit the JSON report instead of the terminal report                |
+| `diff`    | `-b, --base <ref>`    | Git ref to diff against (default: `origin/main`, `main`, `HEAD~1`) |
+| `diff`    | `-g, --gate <level>`  | Blocking level: `medium`, `high`, or `critical` (default: `high`)  |
+| `diff`    | `-d, --depth <n>`     | Cap reverse traversal per file                                     |
+| `diff`    | `-c, --config <path>` | Use a specific config file                                         |
+| `diff`    | `--no-color`          | Disable ANSI colors                                                |
 
 ### `ripple doctor`
 
@@ -242,6 +262,41 @@ $ ripple doctor
 ### `ripple init`
 
 Writes `ripple.config.json` with the recommended defaults, ready to edit.
+
+### `ripple diff`
+
+Analyzes every file that changed since a base git ref, scores each with the
+same risk model as `analyze`, and gates the change set: any file reaching
+the gate level (HIGH by default) makes the command exit `1`. Untracked
+files are included; deleted files and non-source changes are skipped.
+
+```bash
+cd my-project
+ripple diff                       # vs origin/main (then main, then HEAD~1)
+ripple diff --base HEAD~1 --json  # machine-readable gate report
+ripple diff --gate critical       # only CRITICAL blocks the merge
+```
+
+```text
+╭ ripple ─────────────────────╮
+│  ❯ diff vs origin/main      │
+╰─────────────────────────────╯
+
+Changed  2 files
+Source   2 files
+Duration 118ms
+
+✖ Gate blocked — 1 CRITICAL (no HIGH or CRITICAL)
+
+─────────────────────────────────────
+Risk analysis (2 files)
+✖ src/auth/token.ts     CRITICAL · 88.2/100 ████████░░
+● src/auth/session.ts   LOW · 12.4/100 █░░░░░░░░░
+… src/api/legacy.js     (not a source file)
+```
+
+Run `ripple diff` locally before opening a PR, and in CI as the same gate —
+identical code, identical verdict.
 
 ## Configuration
 
@@ -379,11 +434,54 @@ error-tolerant recovery, `graph/` resolves specifiers and detects cycles, and
 > change without a major version bump. `graph --json` follows the same
 > convention.
 
+### `ripple diff --json`
+
+The diff report wraps a per-file view of the same risk model, plus the gate
+verdict:
+
+```json
+{
+  "tool": "ripple",
+  "version": "0.3.0",
+  "command": "diff",
+  "base": "origin/main",
+  "changedFiles": 2,
+  "files": [
+    {
+      "file": "src/auth/token.ts",
+      "analyzed": true,
+      "risk": { "score": 88.2, "level": "CRITICAL", "factors": [] },
+      "affectedFiles": 14,
+      "targetInCycle": false
+    },
+    { "file": "src/api/legacy.js", "analyzed": false }
+  ],
+  "gate": {
+    "level": "high",
+    "blocked": true,
+    "counts": { "low": 0, "medium": 0, "high": 0, "critical": 1 }
+  },
+  "durationMs": 118
+}
+```
+
+`blocked` tells CI everything: exit code `1` if `true`, `0` otherwise.
+
 ### Use it in CI
 
 ```bash
 ripple analyze src/authentication/login.ts --json | jq -r .risk.level
 # MEDIUM
+```
+
+Gate every changed file in one call:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+ripple diff --json --gate high
+# exits 1 when any changed file is HIGH or CRITICAL
 ```
 
 ```bash
@@ -430,12 +528,12 @@ fi
 
 ## Exit codes
 
-| Code | Meaning                   |
-| ---- | ------------------------- |
-| `0`  | Success                   |
-| `1`  | General failure           |
-| `2`  | Target file not found     |
-| `3`  | Config missing or invalid |
+| Code | Meaning                               |
+| ---- | ------------------------------------- |
+| `0`  | Success                               |
+| `1`  | General failure / gate blocked        |
+| `2`  | Target file or git base ref not found |
+| `3`  | Config missing or invalid             |
 
 ## Development
 
@@ -460,6 +558,10 @@ Before contributing, read [CONTRIBUTING.md](CONTRIBUTING.md).
 npm install -g @alimaandev/ripple
 ripple analyze src/your-file.ts --json | jq -r .risk.level   # MEDIUM, HIGH, ...
 ```
+
+If Ripple has ever kept you from an accidental breaking change, a
+[little star](https://github.com/alimaandev/ripple) goes a long way — it
+helps other developers find it.
 
 ## License
 

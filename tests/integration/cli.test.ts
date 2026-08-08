@@ -183,3 +183,97 @@ describe("ripple init", () => {
     expect(forced.code).toBe(0);
   });
 });
+
+function gitRepo(): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ripple-diff-"));
+  const git = (...args: string[]): void => {
+    execFileSync("git", args, { cwd: dir, stdio: "ignore" });
+  };
+  git("init", "-b", "main");
+  git("config", "user.email", "test@ripple.dev");
+  git("config", "user.name", "Ripple Test");
+  return dir;
+}
+
+describe("ripple diff", () => {
+  let hasGit = true;
+  try {
+    execFileSync("git", ["--version"], { stdio: "ignore" });
+  } catch {
+    hasGit = false;
+  }
+  const diffIt = hasGit ? it : it.skip;
+
+  function writeTree(dir: string): void {
+    fs.mkdirSync(path.join(dir, "src"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "src", "a.ts"), "export const a = 1;\n");
+    fs.writeFileSync(
+      path.join(dir, "src", "b.ts"),
+      'import { a } from "./a";\nexport const b = a + 1;\n',
+    );
+    fs.writeFileSync(
+      path.join(dir, "src", "main.ts"),
+      'import { b } from "./b";\nconsole.log(b);\n',
+    );
+    execFileSync("git", ["add", "."], { cwd: dir, stdio: "ignore" });
+    execFileSync("git", ["commit", "-m", "baseline"], { cwd: dir, stdio: "ignore" });
+  }
+
+  diffIt("analyzes the change set and gates it consistently", { timeout: 90_000 }, () => {
+    const dir = gitRepo();
+    writeTree(dir);
+    fs.writeFileSync(
+      path.join(dir, "src", "b.ts"),
+      'import { a } from "./a";\nexport const b = a + 1;\nexport const c = a + 2;\n',
+    );
+
+    const result = runCli(["diff", "--json"], dir);
+    const report = JSON.parse(result.stdout) as {
+      tool: string;
+      command: string;
+      base: string;
+      changedFiles: number;
+      files: Array<{ file: string; analyzed: boolean }>;
+      gate: { level: string; blocked: boolean };
+    };
+
+    expect(report.tool).toBe("ripple");
+    expect(report.command).toBe("diff");
+    expect(report.base).not.toBe("");
+    expect(report.changedFiles).toBeGreaterThanOrEqual(1);
+    expect(report.files[0]!.file).toBe("src/b.ts");
+    expect(report.files[0]!.analyzed).toBe(true);
+    expect(result.code).toBe(report.gate.blocked ? 1 : 0);
+  });
+
+  diffIt("passes with --gate critical when nothing is critical", { timeout: 90_000 }, () => {
+    const dir = gitRepo();
+    writeTree(dir);
+    fs.writeFileSync(
+      path.join(dir, "src", "b.ts"),
+      'import { a } from "./a";\nexport const b = a + 1;\nexport const d = a * 2;\n',
+    );
+
+    const result = runCli(["diff", "--json", "--gate", "critical"], dir);
+    const report = JSON.parse(result.stdout) as { gate: { level: string; blocked: boolean } };
+    expect(result.code).toBe(0);
+    expect(report.gate).toMatchObject({ level: "critical", blocked: false });
+  });
+
+  diffIt("renders a terminal report", { timeout: 90_000 }, () => {
+    const dir = gitRepo();
+    writeTree(dir);
+
+    const result = runCli(["diff", "--base", "HEAD"], dir);
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain("diff vs HEAD");
+    expect(result.stdout).toContain("Gate passed");
+  });
+
+  diffIt("exits 2 outside a git repository", { timeout: 90_000 }, () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ripple-nogit-"));
+    const result = runCli(["diff", "--base", "main"], dir);
+    expect(result.code).toBe(2);
+    expect(result.stderr).toContain("Git ref not found");
+  });
+});

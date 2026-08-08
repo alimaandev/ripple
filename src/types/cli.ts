@@ -45,6 +45,21 @@ export interface InitOptions {
   color?: boolean;
 }
 
+/** Parsed command-line options for `ripple diff`. */
+export interface DiffOptions {
+  json: boolean;
+  verbose: boolean;
+  /** Whether to emit ANSI colors. `false` when `--no-color` is passed. */
+  color?: boolean;
+  /** Git ref to compute the change set against. */
+  base?: string;
+  /** Minimum risk level that blocks the gate. */
+  gate?: "medium" | "high" | "critical";
+  /** Cap on reverse traversal depth per file. */
+  depth?: number;
+  config?: string;
+}
+
 /** Process exit codes used across commands. */
 export const ExitCode = {
   Success: 0,

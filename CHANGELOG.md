@@ -4,6 +4,35 @@ All notable changes to Ripple are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-08
+
+### Added
+
+- `ripple diff` — change-set gating. Analyzes every file changed since a
+  base git ref (`origin/main`, then `main`, then `HEAD~1`, or `--base <ref>`),
+  scores each file with the same risk model as `analyze`, and blocks when
+  any file reaches the gate level. Helpful for PR/CI gates.
+- `--gate <medium|high|critical>` — minimum level that blocks the gate
+  (HIGH by default), for both terminal and `--json` reports.
+- Deleted files and non-source changes are reported but skipped; untracked
+  files are included.
+- `diff --json` contract: per-file risk summary plus `gate.blocked` verdict
+  wired to the exit code, so CI only reads one boolean.
+- Per-file details in the diff contract: `analyzed`, `affectedFiles`,
+  `targetInCycle`, and `risk` (when analyzed).
+- Unit tests for `src/git/changed.ts` (real git invocations against scratch
+  repositories) and `src/commands/diff.ts` report helpers; integration tests
+  for the CLI's diff surface.
+
+### Changed
+
+- Exit code `2` now also covers an unresolvable `--base` git ref (in
+  addition to a missing target file).
+
+### Fixed
+
+- (none)
+
 ## [0.2.0] - 2026-08-07
 
 ### Added

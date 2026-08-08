@@ -3,6 +3,7 @@ import { analyzeCommand } from "../commands/analyze.js";
 import { graphCommand } from "../commands/graph.js";
 import { doctorCommand } from "../commands/doctor.js";
 import { initCommand } from "../commands/init.js";
+import { diffCommand } from "../commands/diff.js";
 import { RippleError } from "../utils/errors.js";
 import { ExitCode } from "../types/cli.js";
 import type { CommandContext, ExitCode as ExitCodeType } from "../types/cli.js";
@@ -62,6 +63,40 @@ export function createProgram(ctx: CommandContext): Command {
           json: Boolean(options.json),
           verbose: Boolean(options.verbose),
           reverse: Boolean(options.reverse),
+          ...(options.depth !== undefined ? { depth: options.depth as number } : {}),
+          ...(options.config !== undefined ? { config: options.config as string } : {}),
+          color: options.color as boolean | undefined,
+        },
+        ctx,
+      );
+      if (exitCode !== ExitCode.Success) {
+        throw new ExitError(exitCode);
+      }
+    });
+
+  program
+    .command("diff")
+    .description("Analyze changed files since a base ref and gate risky changes")
+    .option("-j, --json", "emit a machine-readable JSON report")
+    .option("-v, --verbose", "include extra sections")
+    .option("-b, --base <ref>", "git ref to diff against (default: origin/main, main, HEAD~1)")
+    .option(
+      "-g, --gate <level>",
+      "risk level that blocks the gate (medium | high | critical)",
+      parseGateLevel,
+    )
+    .option("-d, --depth <number>", "cap the reverse traversal depth", parsePositiveInt)
+    .option("-c, --config <path>", "path to a ripple config file")
+    .option("--no-color", "disable ANSI colors")
+    .action(async (options: Record<string, unknown>) => {
+      const exitCode = await diffCommand(
+        {
+          json: Boolean(options.json),
+          verbose: Boolean(options.verbose),
+          ...(options.base !== undefined ? { base: options.base as string } : {}),
+          ...(options.gate !== undefined
+            ? { gate: options.gate as "medium" | "high" | "critical" }
+            : {}),
           ...(options.depth !== undefined ? { depth: options.depth as number } : {}),
           ...(options.config !== undefined ? { config: options.config as string } : {}),
           color: options.color as boolean | undefined,
@@ -141,6 +176,18 @@ function parsePositiveInt(value: string): number {
     );
   }
   return parsed;
+}
+
+/** Validate the `--gate` argument. */
+function parseGateLevel(value: string): "medium" | "high" | "critical" {
+  if (value === "medium" || value === "high" || value === "critical") {
+    return value;
+  }
+  throw new CommanderError(
+    1,
+    "commander.invalidArgument",
+    `expected one of medium | high | critical, got "${value}"`,
+  );
 }
 
 /** Print an error to the error stream. */
