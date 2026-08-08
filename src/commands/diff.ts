@@ -17,6 +17,11 @@ import {
   type TextStyle,
 } from "../formatter/text.js";
 import { serializeJson } from "../formatter/json.js";
+import {
+  buildFileAnnotations,
+  buildGateAnnotation,
+  renderAnnotation,
+} from "../formatter/annotations.js";
 import { runPipeline } from "./pipeline.js";
 import { displayPath, pathKey } from "../utils/paths.js";
 import { ExitCode } from "../types/cli.js";
@@ -71,8 +76,9 @@ export function riskySummary(counts: DiffCounts, gate: GateLevel): string {
 }
 
 export async function diffCommand(options: DiffOptions, ctx: CommandContext): Promise<ExitCode> {
+  const format = options.format ?? (options.json ? "json" : "terminal");
   const style: TextStyle = { color: resolveColor(options.color) };
-  const tracker = createStageTracker(!options.json);
+  const tracker = createStageTracker(format === "terminal");
   const started = Date.now();
 
   const context = await loadProjectContext(ctx.cwd, options.config);
@@ -114,7 +120,7 @@ export async function diffCommand(options: DiffOptions, ctx: CommandContext): Pr
   const blocked = results.some((result) => LEVEL_INDEX[result.risk.level] >= GATE_INDEX[gate]);
   const durationMs = Date.now() - started;
 
-  if (options.json) {
+  if (format === "json") {
     ctx.writer.write(
       serializeJson(
         buildDiffJsonReport(
@@ -129,6 +135,18 @@ export async function diffCommand(options: DiffOptions, ctx: CommandContext): Pr
         ),
       ),
     );
+    return blocked ? ExitCode.Failure : ExitCode.Success;
+  }
+
+  if (format === "github") {
+    const annotations = [
+      ...buildFileAnnotations(
+        [...byRel.entries()].map(([file, result]) => ({ file, result })),
+        gate,
+      ),
+      buildGateAnnotation(blocked, gate, counts),
+    ];
+    ctx.writer.write(`${annotations.map(renderAnnotation).join("\n")}\n`);
     return blocked ? ExitCode.Failure : ExitCode.Success;
   }
 

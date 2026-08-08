@@ -1,6 +1,6 @@
 {
   "name": "@alimaandev/ripple",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Dependency impact analysis for TypeScript projects. Answers the question: what will break if I change this file?",
   "keywords": [
     "cli",

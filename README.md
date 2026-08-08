@@ -97,7 +97,7 @@ Everything below is real output against a shipped example project in `tests/fixt
 ```bash
 npm install -g @alimaandev/ripple
 
-ripple version                  # → 0.4.0
+ripple version                  # → 0.5.0
 ```
 
 Or install from source:
@@ -231,6 +231,7 @@ ripple <command> [options]
 | `diff`    | `-j, --json`          | Emit the JSON report instead of the terminal report                                            |
 | `diff`    | `-b, --base <ref>`    | Git ref to diff against (default: `origin/main`, `main`, `HEAD~1`, or `diff.base` from config) |
 | `diff`    | `-g, --gate <level>`  | Blocking level: `medium`, `high`, or `critical` (default: `high`, or `diff.gate` from config)  |
+| `diff`    | `-f, --format <fmt>`  | Output: `terminal`, `json`, or `github` (workflow annotations)                                 |
 | `diff`    | `-d, --depth <n>`     | Cap reverse traversal per file                                                                 |
 | `diff`    | `-c, --config <path>` | Use a specific config file                                                                     |
 | `diff`    | `--no-color`          | Disable ANSI colors                                                                            |
@@ -297,6 +298,23 @@ Risk analysis (2 files)
 
 Run `ripple diff` locally before opening a PR, and in CI as the same gate —
 identical code, identical verdict.
+
+```bash
+ripple diff --format github
+```
+
+`--format github` emits GitHub Actions workflow commands. Each risky change
+shows as a warning or error annotation right on the PR's Files tab —
+`::error` when a file blocks the gate, `::warning` otherwise — plus a
+`::notice` line with the gate verdict. The exit code still carries the
+verdict, so the job fails when the gate blocks:
+
+```yaml
+- run: npx @alimaandev/ripple diff --format github
+```
+
+(`--json` is shorthand for `--format json`; the format flag also accepts
+`terminal`, the default.)
 
 ## Configuration
 

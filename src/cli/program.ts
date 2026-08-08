@@ -5,8 +5,7 @@ import { doctorCommand } from "../commands/doctor.js";
 import { initCommand } from "../commands/init.js";
 import { diffCommand } from "../commands/diff.js";
 import { RippleError } from "../utils/errors.js";
-import { ExitCode } from "../types/cli.js";
-import type { CommandContext, ExitCode as ExitCodeType } from "../types/cli.js";
+import { ExitCode, type CommandContext, type DiffFormat } from "../types/cli.js";
 
 /**
  * CLI program definition. `run()` returns the process exit code instead of
@@ -78,6 +77,7 @@ export function createProgram(ctx: CommandContext): Command {
     .command("diff")
     .description("Analyze changed files since a base ref and gate risky changes")
     .option("-j, --json", "emit a machine-readable JSON report")
+    .option("-f, --format <format>", "output format: terminal | json | github", parseDiffFormat)
     .option("-v, --verbose", "include extra sections")
     .option("-b, --base <ref>", "git ref to diff against (default: origin/main, main, HEAD~1)")
     .option(
@@ -92,6 +92,7 @@ export function createProgram(ctx: CommandContext): Command {
       const exitCode = await diffCommand(
         {
           json: Boolean(options.json),
+          format: (options.format as DiffFormat) ?? (options.json ? "json" : "terminal"),
           verbose: Boolean(options.verbose),
           ...(options.base !== undefined ? { base: options.base as string } : {}),
           ...(options.gate !== undefined
@@ -160,7 +161,7 @@ export function createProgram(ctx: CommandContext): Command {
 
 /** Thrown internally to propagate a non-success exit code through commander. */
 class ExitError extends Error {
-  constructor(readonly exitCode: ExitCodeType) {
+  constructor(readonly exitCode: ExitCode) {
     super(`exit ${exitCode}`);
     this.name = "ExitError";
   }
@@ -190,6 +191,18 @@ function parseGateLevel(value: string): "medium" | "high" | "critical" {
   );
 }
 
+/** Validate the `--format` argument. */
+function parseDiffFormat(value: string): DiffFormat {
+  if (value === "terminal" || value === "json" || value === "github") {
+    return value;
+  }
+  throw new CommanderError(
+    1,
+    "commander.invalidArgument",
+    `expected one of terminal | json | github, got "${value}"`,
+  );
+}
+
 /** Print an error to the error stream. */
 function printError(error: unknown, ctx: CommandContext): void {
   if (error instanceof RippleError) {
@@ -210,7 +223,7 @@ export interface RunOptions {
 }
 
 /** Parse arguments and run the CLI, returning the exit code. */
-export async function run({ argv, ctx }: RunOptions): Promise<ExitCodeType> {
+export async function run({ argv, ctx }: RunOptions): Promise<ExitCode> {
   const program = createProgram(ctx);
   program.exitOverride();
 
