@@ -11,7 +11,8 @@ contributors and at people auditing the tool's behavior.
                 └──────┬──────┘
                        │ CommandContext (writer, cwd, version)
                ┌───────┴────────┐
-               │   commands/    │  analyze · graph · doctor · init
+               │   commands/    │  analyze · graph · diff · doctor · init
+               │     git/       │  read-only change-set discovery for diff
                └───────┬────────┘
                        │ runPipeline: config → discover → parse → resolve
                ┌───────┴────────┐
@@ -24,6 +25,7 @@ contributors and at people auditing the tool's behavior.
                └───────┬────────┘
                ┌───────┴────────┐
                │   output/      │  report assembly (terminal + JSON)
+               │     ui/        │  branding, gauge, icons, progress
                └────────────────┘
 ```
 
@@ -108,22 +110,43 @@ log-scaled against a cap so one huge graph cannot dominate. The score is
 mapped to a level by thresholds; factors are kept in the result so
 `--verbose` can show the breakdown.
 
-### 7. Output (`src/output/`, `src/formatter/`)
+### 7. Output (`src/output/`, `src/formatter/`, `src/ui/`)
 
-Commands render through `report.ts`, which builds either:
+Commands render through `report.ts` (or `commands/diff.ts` for the diff
+report), which builds either:
 
 - a **terminal report** — text via `formatter/text.ts`, aligned key/values
-  and tables via `table.ts`, trees via `tree.ts` (treeify), all pure
+  and tables via `table.ts`, trees via `tree.ts` (treeify), all pure;
+  `ui/` supplies the brand header card, risk gauge, icons, and the staged
+  progress tracker used during analysis
 - a **JSON report** — plain data structures (`types/output.ts`), serialized
   by `formatter/json.ts`
 
 `OutputWriter` abstracts the destination (`TerminalWriter` → stdout,
 `InMemoryWriter` → tests). Errors go to a separate `errorWriter` (stderr).
 
+### 8. Git integration (`src/git/`)
+
+`ripple diff` reads the repository exclusively through
+`git changed()/resolveBase()`, a thin read-only wrapper around `git`:
+
+1. `resolveBase(cwd, requested?)` — prefers `--base`, else tries
+   `origin/main`, `main`, `HEAD~1` (whichever `rev-parse --verify` accepts).
+2. `changedFiles` — computes the merge base, lists tracked diffs
+   (`--diff-filter=ACMRT`, deletions excluded because there is nothing to
+   analyze) plus untracked files, and returns repo-relative paths sorted.
+
+`diffCommand` then runs the standard pipeline once and scores every changed
+source file with `analyzeFile`; any result at or above the gate level
+blocks the run (exit 1). The report surfaces a single boolean
+(`gate.blocked`) for CI. Tests in `tests/unit/git/` spawn real scratch
+repositories.
+
 ## Error model
 
 `RippleError` carries an exit code and an optional hint. Exit codes are
-stable: 0 success, 1 failure, 2 file not found, 3 config invalid. The
+stable: 0 success, 1 failure/gate blocked, 2 file not found or unresolvable
+git base ref, 3 config invalid. The
 commander layer (`cli/program.ts`) converts everything — including
 commander's own errors — into exit codes; the process exit code is set in
 `bin.ts`, keeping the program testable without `process.exit`.

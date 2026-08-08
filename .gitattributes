@@ -1,0 +1,9 @@
+# Normalize line endings so the working tree stays stable for every OS
+# (Windows contributors should not produce CRLF churn in PRs).
+* text=auto eol=lf
+
+# Binary files — never normalized, never diffed line-by-line.
+*.png binary
+*.svg text eol=lf
+*.docx binary
+*.tgz binary

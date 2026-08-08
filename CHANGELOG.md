@@ -4,6 +4,27 @@ All notable changes to Ripple are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Contributor-facing repository setup: `CODE_OF_CONDUCT.md`, `SECURITY.md`,
+  required issue forms (bug + feature), pull request template, and a
+  refreshed `CONTRIBUTING.md` with a first-PR walkthrough and the
+  automated release flow.
+- CI test matrix now covers Node 22 on Linux and Windows plus Node 24 on
+  Linux; the `dogfood` job runs `ripple diff --gate high` on every pull
+  request so Ripple gates its own PRs.
+- Dependabot (weekly, grouped) with automated security alerts and
+  `test:unit` / `test:integration` convenience scripts.
+
+### Changed
+
+- Test runner uses a forked process pool with a 30s per-test timeout —
+  eliminates the intermittent timeouts of the heavy ts-morph suites.
+- `npm publish` warning about the `bin` path is gone (`npm pkg fix`).
+- Line endings are normalized repo-wide via `.gitattributes`.
+
 ## [0.3.0] - 2026-08-08
 
 ### Added

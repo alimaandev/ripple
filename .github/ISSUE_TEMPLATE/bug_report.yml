@@ -1,0 +1,65 @@
+name: Bug report
+description: Something in Ripple is broken or produces wrong output
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. A good report gets a fix
+        fast — give us a minimal reproduction and the exact output you saw.
+  - type: input
+    id: version
+    attributes:
+      label: Ripple version
+      description: Output of `ripple version`
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Linux
+        - Windows
+        - Windows WSL
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      description: Output of `node --version`
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      description: The exact commands and a minimal file tree (config, changed files).
+      placeholder: |
+        Good: paste the few files + commands that trigger the issue.
+        Bad: "my big project breaks" — we cannot debug private code.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: |
+        Paste the full terminal or `--json` output. If it's a
+        crash, include the stack trace.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I reproduced this with the latest version
+        - label: I ran `ripple doctor` and included its output
+        - label: I can provide a minimal fixture if asked

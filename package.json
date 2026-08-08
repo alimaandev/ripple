@@ -34,7 +34,7 @@
     "access": "public"
   },
   "bin": {
-    "ripple": "./dist/bin.js"
+    "ripple": "dist/bin.js"
   },
   "files": [
     "dist"
@@ -48,6 +48,8 @@
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",

@@ -1,0 +1,41 @@
+name: Feature request
+description: Suggest a new capability for Ripple
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What can't you do today that you need? A short story beats an abstract wish.
+    validations:
+      required: true
+  - type: textarea
+    id: desired
+    attributes:
+      label: Desired behavior
+      description: How you expect to use it — commands, flags, output shape.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any existing workarounds, other tools, or config tweaks you tried.
+  - type: dropdown
+    id: surface
+    attributes:
+      label: What does it touch?
+      options:
+        - New command or flag
+        - Output / JSON contract
+        - Analysis model (weights, levels, thresholds)
+        - Performance
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Screenshots, links to issues, or notes go here.

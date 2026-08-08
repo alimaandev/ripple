@@ -1,0 +1,29 @@
+# Dependabot version updates:
+# - npm dependencies, weekly, grouped by scope so PRs stay reviewable
+# - the github-actions ecosystem is tiny here; a weekly check is enough
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: friday
+    groups:
+      runtime:
+        applies-to: version-updates
+        dependency-type: production
+        update-types: [minor, patch]
+      dev:
+        applies-to: version-updates
+        dependency-type: development
+        update-types: [minor, patch]
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

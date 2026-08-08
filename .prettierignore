@@ -4,6 +4,7 @@ coverage
 pnpm-lock.yaml
 LICENSE
 *.docx
+.gitattributes
 tests/fixtures
 .github
 examples
