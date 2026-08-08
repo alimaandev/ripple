@@ -17,6 +17,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   authors get autocomplete and validation for the `diff` block.
 - Unit + integration coverage for config-driven base/gate resolution and
   flag-over-config precedence.
+- Usage examples are now shown for each CLI command in `ripple --help`.
+
 - Contributor-facing repository setup: `CODE_OF_CONDUCT.md`, `SECURITY.md`,
   required issue forms (bug + feature), pull request template, and a
   refreshed `CONTRIBUTING.md` with a first-PR walkthrough and the

@@ -201,14 +201,14 @@ Dependents (reverse)
 ripple <command> [options]
 ```
 
-| Command          | Description                                       |
-| ---------------- | ------------------------------------------------- |
-| `analyze <file>` | Impact analysis for a target file                 |
-| `graph [file]`   | Project stats, or a single file's dependency tree |
-| `diff`           | Gate all files changed since a git base ref       |
-| `doctor`         | Project and environment health check              |
-| `init`           | Scaffold a `ripple.config.json`                   |
-| `version`        | Print the current version                         |
+| Command          | Description                                       | Example                                      |
+| ---------------- | ------------------------------------------------- | -------------------------------------------- |
+| `analyze <file>` | Impact analysis for a target file                 | `ripple analyze src/authentication/login.ts` |
+| `graph [file]`   | Project stats, or a single file's dependency tree | `ripple graph src/circular/b.ts -r`          |
+| `diff`           | Gate all files changed since a git base ref       | `ripple diff --base main --gate critical`    |
+| `doctor`         | Project and environment health check              | `ripple doctor`                              |
+| `init`           | Scaffold a `ripple.config.json`                   | `ripple init`                                |
+| `version`        | Print the current version                         | `ripple version`                             |
 
 ### Options
 

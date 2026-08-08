@@ -320,3 +320,17 @@ describe("ripple diff", () => {
     expect(result.stderr).toContain("Git ref not found");
   });
 });
+
+describe("ripple help", () => {
+  it("shows usage examples for each command", { timeout: 90_000 }, () => {
+    const result = runCli(["--help"], basicFixture);
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain("Example: ripple analyze src/authentication/login.ts");
+    expect(result.stdout).toContain("Example: ripple graph src/circular/b.ts -r");
+    expect(result.stdout).toContain("Example: ripple diff --base main --gate critical");
+    expect(result.stdout).toContain("Example: ripple doctor");
+    expect(result.stdout).toContain("Example: ripple init");
+    expect(result.stdout).toContain("Example: ripple version");
+  });
+});

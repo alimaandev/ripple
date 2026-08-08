@@ -15,12 +15,30 @@ import type { CommandContext, ExitCode as ExitCodeType } from "../types/cli.js";
 
 const PROGRAM_NAME = "ripple";
 
+const COMMAND_EXAMPLES: Record<string, string> = {
+  analyze: "ripple analyze src/authentication/login.ts",
+  graph: "ripple graph src/circular/b.ts -r",
+  diff: "ripple diff --base main --gate critical",
+  doctor: "ripple doctor",
+  init: "ripple init",
+  version: "ripple version",
+};
+
 export function createProgram(ctx: CommandContext): Command {
   const program = new Command()
     .name(PROGRAM_NAME)
     .description("Dependency impact analysis for TypeScript and JavaScript projects.")
     .version(ctx.version, "-V, --version", "print the Ripple version")
     .showHelpAfterError();
+
+  program.configureHelp({
+    subcommandDescription: (cmd) => {
+      const description = cmd.description();
+      const example = COMMAND_EXAMPLES[cmd.name()];
+
+      return example ? `${description}\n  Example: ${example}` : description;
+    },
+  });
 
   program
     .command("analyze <file>")
