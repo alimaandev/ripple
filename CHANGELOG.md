@@ -4,10 +4,19 @@ All notable changes to Ripple are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.0] - 2026-08-08
 
 ### Added
 
+- Config-driven `ripple diff`: a `diff` block in `ripple.config.*`
+  (`diff.base`, `diff.gate`) sets the base ref and gate level when the
+  corresponding flag is omitted. Precedence: `--base`/`--gate` flags >
+  config file > built-in defaults (`origin/main` → `main` → `HEAD~1`,
+  `high`).
+- `DiffConfig` is part of the typed public API, so `ripple.config.ts`
+  authors get autocomplete and validation for the `diff` block.
+- Unit + integration coverage for config-driven base/gate resolution and
+  flag-over-config precedence.
 - Contributor-facing repository setup: `CODE_OF_CONDUCT.md`, `SECURITY.md`,
   required issue forms (bug + feature), pull request template, and a
   refreshed `CONTRIBUTING.md` with a first-PR walkthrough and the

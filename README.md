@@ -97,7 +97,7 @@ Everything below is real output against a shipped example project in `tests/fixt
 ```bash
 npm install -g @alimaandev/ripple
 
-ripple version                  # → 0.1.1
+ripple version                  # → 0.4.0
 ```
 
 Or install from source:
@@ -212,28 +212,28 @@ ripple <command> [options]
 
 ### Options
 
-| Command   | Flag                  | Description                                                        |
-| --------- | --------------------- | ------------------------------------------------------------------ |
-| `analyze` | `-j, --json`          | Emit the JSON report instead of the terminal report                |
-| `analyze` | `-v, --verbose`       | Include the risk-factor point breakdown                            |
-| `analyze` | `-d, --depth <n>`     | Cap the reverse traversal at `n` levels                            |
-| `analyze` | `-c, --config <path>` | Use a specific config file                                         |
-| `analyze` | `--no-color`          | Disable ANSI colors                                                |
-| `graph`   | `-j, --json`          | Emit the JSON report                                               |
-| `graph`   | `-r, --reverse`       | Show dependents (what imports this file) instead of dependencies   |
-| `graph`   | `-d, --depth <n>`     | Cap tree depth                                                     |
-| `graph`   | `-c, --config <path>` | Use a specific config file                                         |
-| `graph`   | `--no-color`          | Disable ANSI colors                                                |
-| `doctor`  | `-c, --config <path>` | Use a specific config file                                         |
-| `doctor`  | `-v, --verbose`       | Verbose output                                                     |
-| `doctor`  | `--no-color`          | Disable ANSI colors                                                |
-| `init`    | `-f, --force`         | Overwrite an existing config                                       |
-| `diff`    | `-j, --json`          | Emit the JSON report instead of the terminal report                |
-| `diff`    | `-b, --base <ref>`    | Git ref to diff against (default: `origin/main`, `main`, `HEAD~1`) |
-| `diff`    | `-g, --gate <level>`  | Blocking level: `medium`, `high`, or `critical` (default: `high`)  |
-| `diff`    | `-d, --depth <n>`     | Cap reverse traversal per file                                     |
-| `diff`    | `-c, --config <path>` | Use a specific config file                                         |
-| `diff`    | `--no-color`          | Disable ANSI colors                                                |
+| Command   | Flag                  | Description                                                                                    |
+| --------- | --------------------- | ---------------------------------------------------------------------------------------------- |
+| `analyze` | `-j, --json`          | Emit the JSON report instead of the terminal report                                            |
+| `analyze` | `-v, --verbose`       | Include the risk-factor point breakdown                                                        |
+| `analyze` | `-d, --depth <n>`     | Cap the reverse traversal at `n` levels                                                        |
+| `analyze` | `-c, --config <path>` | Use a specific config file                                                                     |
+| `analyze` | `--no-color`          | Disable ANSI colors                                                                            |
+| `graph`   | `-j, --json`          | Emit the JSON report                                                                           |
+| `graph`   | `-r, --reverse`       | Show dependents (what imports this file) instead of dependencies                               |
+| `graph`   | `-d, --depth <n>`     | Cap tree depth                                                                                 |
+| `graph`   | `-c, --config <path>` | Use a specific config file                                                                     |
+| `graph`   | `--no-color`          | Disable ANSI colors                                                                            |
+| `doctor`  | `-c, --config <path>` | Use a specific config file                                                                     |
+| `doctor`  | `-v, --verbose`       | Verbose output                                                                                 |
+| `doctor`  | `--no-color`          | Disable ANSI colors                                                                            |
+| `init`    | `-f, --force`         | Overwrite an existing config                                                                   |
+| `diff`    | `-j, --json`          | Emit the JSON report instead of the terminal report                                            |
+| `diff`    | `-b, --base <ref>`    | Git ref to diff against (default: `origin/main`, `main`, `HEAD~1`, or `diff.base` from config) |
+| `diff`    | `-g, --gate <level>`  | Blocking level: `medium`, `high`, or `critical` (default: `high`, or `diff.gate` from config)  |
+| `diff`    | `-d, --depth <n>`     | Cap reverse traversal per file                                                                 |
+| `diff`    | `-c, --config <path>` | Use a specific config file                                                                     |
+| `diff`    | `--no-color`          | Disable ANSI colors                                                                            |
 
 ### `ripple doctor`
 
@@ -321,6 +321,10 @@ defaults — every field is optional.
       "cycleMembership": 0.1
     },
     "thresholds": { "medium": 30, "high": 55, "critical": 80 }
+  },
+  "diff": {
+    "base": "origin/main",
+    "gate": "high"
   }
 }
 ```
@@ -333,8 +337,13 @@ defaults — every field is optional.
 | `tsconfigPath`    | `tsconfig.json`                                             | tsconfig to read for `paths`                           |
 | `risk.weights`    | see example                                                 | Risk signal weights                                    |
 | `risk.thresholds` | 30 / 55 / 80                                                | Score thresholds for MEDIUM / HIGH / CRITICAL          |
+| `diff.base`       | `origin/main` → `main` → `HEAD~1`                           | Git ref to diff against when `--base` is not given     |
+| `diff.gate`       | `high`                                                      | Blocking level when `--gate` is not given              |
 
 `node_modules` is always excluded, regardless of config.
+
+The `diff` block sets command defaults only — `--base`/`--gate` flags always
+win over the config file, which wins over the built-in defaults.
 
 ## Risk scoring
 

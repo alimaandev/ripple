@@ -33,6 +33,11 @@ describe("loadConfig", () => {
     expect(result.config.aliases).toEqual({});
   });
 
+  it("loads diff settings from a json config", async () => {
+    const result = await loadConfig(configsDir, "diff.json");
+    expect(result.config.diff).toEqual({ base: "origin/release", gate: "critical" });
+  });
+
   it("throws for an explicit path that does not exist", async () => {
     await expect(loadConfig(configsDir, "missing.ts")).rejects.toThrow(RippleError);
     try {

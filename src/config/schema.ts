@@ -41,6 +41,13 @@ const riskConfigSchema = z
   })
   .strict();
 
+const diffConfigSchema = z
+  .object({
+    base: z.string().min(1).optional(),
+    gate: z.enum(["medium", "high", "critical"]).default(DEFAULT_CONFIG.diff.gate),
+  })
+  .strict();
+
 export const rippleConfigSchema: z.ZodType<RippleConfig> = z
   .object({
     include: z.array(z.string().min(1)).min(1).default(DEFAULT_CONFIG.include),
@@ -48,6 +55,7 @@ export const rippleConfigSchema: z.ZodType<RippleConfig> = z
     aliases: z.record(z.string(), z.string()).default(DEFAULT_CONFIG.aliases),
     tsconfigPath: z.string().min(1).default(DEFAULT_CONFIG.tsconfigPath),
     risk: riskConfigSchema.default(DEFAULT_CONFIG.risk),
+    diff: diffConfigSchema.default(DEFAULT_CONFIG.diff),
   })
   .strict();
 
