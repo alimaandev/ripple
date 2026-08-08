@@ -62,7 +62,8 @@ jobs:
 
   # Dogfooding: Ripple gates its own pull requests. Any changed source file
   # that reaches HIGH risk blocks the merge — the same check we recommend
-  # every Ripple user runs on their own repos.
+  # every Ripple user runs on their own repos. The github format surfaces
+  # each risky file as an annotation directly on the PR's Files tab.
   dogfood:
     runs-on: ubuntu-latest
     steps:
@@ -76,4 +77,4 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
-      - run: node dist/bin.js diff --json --gate high
+      - run: node dist/bin.js diff --format github --gate high
