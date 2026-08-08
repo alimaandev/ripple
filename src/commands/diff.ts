@@ -73,14 +73,16 @@ export function riskySummary(counts: DiffCounts, gate: GateLevel): string {
 export async function diffCommand(options: DiffOptions, ctx: CommandContext): Promise<ExitCode> {
   const style: TextStyle = { color: resolveColor(options.color) };
   const tracker = createStageTracker(!options.json);
-  const gate = options.gate ?? "high";
   const started = Date.now();
 
+  const context = await loadProjectContext(ctx.cwd, options.config);
+  const gate = options.gate ?? context.config.diff.gate ?? "high";
+  const base = options.base ?? context.config.diff.base;
+
   tracker.next("Resolving git changes");
-  const changed = changedFiles(ctx.cwd, options.base);
+  const changed = changedFiles(ctx.cwd, base);
 
   tracker.next("Analyzing changed files");
-  const context = await loadProjectContext(ctx.cwd, options.config);
   const { graph, entryPoints } = await runPipeline(context);
 
   const byRel = new Map<string, AnalysisResult>();

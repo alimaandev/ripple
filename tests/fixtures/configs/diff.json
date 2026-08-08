@@ -1,0 +1,6 @@
+{
+  "diff": {
+    "base": "origin/release",
+    "gate": "critical"
+  }
+}

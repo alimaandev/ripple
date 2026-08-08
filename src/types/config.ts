@@ -3,6 +3,7 @@
  *
  * Every field has a default; a user config only overrides what it sets.
  */
+import type { GateLevel } from "./output.js";
 export interface RiskWeights {
   /** Weight of the (log-scaled) number of affected files. */
   affectedFiles: number;
@@ -37,6 +38,17 @@ export interface RiskConfig {
 }
 
 /**
+ * Diff command tuning. CLI flags (`--base`, `--gate`) always take precedence
+ * over these values.
+ */
+export interface DiffConfig {
+  /** Git ref used as the change-set base when no `--base` is given. */
+  base?: string;
+  /** Minimum risk level that fails the diff gate. Defaults to `"high"`. */
+  gate: GateLevel;
+}
+
+/**
  * The validated `ripple.config.ts` shape.
  */
 export interface RippleConfig {
@@ -50,6 +62,8 @@ export interface RippleConfig {
   tsconfigPath: string;
   /** Risk engine tuning. */
   risk: RiskConfig;
+  /** Diff command tuning. */
+  diff: DiffConfig;
 }
 
 /**

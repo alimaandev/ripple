@@ -260,6 +260,49 @@ describe("ripple diff", () => {
     expect(report.gate).toMatchObject({ level: "critical", blocked: false });
   });
 
+  diffIt("reads base and gate from ripple.config", { timeout: 90_000 }, () => {
+    const dir = gitRepo();
+    writeTree(dir);
+    fs.writeFileSync(
+      path.join(dir, "ripple.config.json"),
+      '{ "diff": { "base": "HEAD", "gate": "critical" } }\n',
+    );
+    fs.writeFileSync(
+      path.join(dir, "src", "b.ts"),
+      'import { a } from "./a";\nexport const b = a + 1;\nexport const e = a * 2;\n',
+    );
+
+    const result = runCli(["diff", "--json"], dir);
+    const report = JSON.parse(result.stdout) as {
+      base: string;
+      gate: { level: string; blocked: boolean };
+    };
+    expect(result.code).toBe(0);
+    expect(report.base).toBe("HEAD");
+    expect(report.gate).toMatchObject({ level: "critical", blocked: false });
+  });
+
+  diffIt("lets CLI flags override ripple.config diff settings", { timeout: 90_000 }, () => {
+    const dir = gitRepo();
+    writeTree(dir);
+    fs.writeFileSync(
+      path.join(dir, "ripple.config.json"),
+      '{ "diff": { "base": "HEAD", "gate": "critical" } }\n',
+    );
+    fs.writeFileSync(
+      path.join(dir, "src", "b.ts"),
+      'import { a } from "./a";\nexport const b = a + 1;\nexport const f = a * 2;\n',
+    );
+
+    const result = runCli(["diff", "--json", "--base", "main", "--gate", "medium"], dir);
+    const report = JSON.parse(result.stdout) as {
+      base: string;
+      gate: { level: string; blocked: boolean };
+    };
+    expect(report.base).toBe("main");
+    expect(report.gate.level).toBe("medium");
+  });
+
   diffIt("renders a terminal report", { timeout: 90_000 }, () => {
     const dir = gitRepo();
     writeTree(dir);

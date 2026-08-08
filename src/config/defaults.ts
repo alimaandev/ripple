@@ -25,4 +25,8 @@ export const DEFAULT_CONFIG: RippleConfig = {
       critical: 80,
     },
   },
+  diff: {
+    base: undefined,
+    gate: "high",
+  },
 };
