@@ -212,28 +212,28 @@ ripple <command> [options]
 
 ### Options
 
-| Command   | Flag                  | Description                                                        |
-| --------- | --------------------- | ------------------------------------------------------------------ |
-| `analyze` | `-j, --json`          | Emit the JSON report instead of the terminal report                |
-| `analyze` | `-v, --verbose`       | Include the risk-factor point breakdown                            |
-| `analyze` | `-d, --depth <n>`     | Cap the reverse traversal at `n` levels                            |
-| `analyze` | `-c, --config <path>` | Use a specific config file                                         |
-| `analyze` | `--no-color`          | Disable ANSI colors                                                |
-| `graph`   | `-j, --json`          | Emit the JSON report                                               |
-| `graph`   | `-r, --reverse`       | Show dependents (what imports this file) instead of dependencies   |
-| `graph`   | `-d, --depth <n>`     | Cap tree depth                                                     |
-| `graph`   | `-c, --config <path>` | Use a specific config file                                         |
-| `graph`   | `--no-color`          | Disable ANSI colors                                                |
-| `doctor`  | `-c, --config <path>` | Use a specific config file                                         |
-| `doctor`  | `-v, --verbose`       | Verbose output                                                     |
-| `doctor`  | `--no-color`          | Disable ANSI colors                                                |
-| `init`    | `-f, --force`         | Overwrite an existing config                                       |
-| `diff`    | `-j, --json`          | Emit the JSON report instead of the terminal report                |
+| Command   | Flag                  | Description                                                                                    |
+| --------- | --------------------- | ---------------------------------------------------------------------------------------------- |
+| `analyze` | `-j, --json`          | Emit the JSON report instead of the terminal report                                            |
+| `analyze` | `-v, --verbose`       | Include the risk-factor point breakdown                                                        |
+| `analyze` | `-d, --depth <n>`     | Cap the reverse traversal at `n` levels                                                        |
+| `analyze` | `-c, --config <path>` | Use a specific config file                                                                     |
+| `analyze` | `--no-color`          | Disable ANSI colors                                                                            |
+| `graph`   | `-j, --json`          | Emit the JSON report                                                                           |
+| `graph`   | `-r, --reverse`       | Show dependents (what imports this file) instead of dependencies                               |
+| `graph`   | `-d, --depth <n>`     | Cap tree depth                                                                                 |
+| `graph`   | `-c, --config <path>` | Use a specific config file                                                                     |
+| `graph`   | `--no-color`          | Disable ANSI colors                                                                            |
+| `doctor`  | `-c, --config <path>` | Use a specific config file                                                                     |
+| `doctor`  | `-v, --verbose`       | Verbose output                                                                                 |
+| `doctor`  | `--no-color`          | Disable ANSI colors                                                                            |
+| `init`    | `-f, --force`         | Overwrite an existing config                                                                   |
+| `diff`    | `-j, --json`          | Emit the JSON report instead of the terminal report                                            |
 | `diff`    | `-b, --base <ref>`    | Git ref to diff against (default: `origin/main`, `main`, `HEAD~1`, or `diff.base` from config) |
-| `diff`    | `-g, --gate <level>`  | Blocking level: `medium`, `high`, or `critical` (default: `high`, or `diff.gate` from config)   |
-| `diff`    | `-d, --depth <n>`     | Cap reverse traversal per file                                     |
-| `diff`    | `-c, --config <path>` | Use a specific config file                                         |
-| `diff`    | `--no-color`          | Disable ANSI colors                                                |
+| `diff`    | `-g, --gate <level>`  | Blocking level: `medium`, `high`, or `critical` (default: `high`, or `diff.gate` from config)  |
+| `diff`    | `-d, --depth <n>`     | Cap reverse traversal per file                                                                 |
+| `diff`    | `-c, --config <path>` | Use a specific config file                                                                     |
+| `diff`    | `--no-color`          | Disable ANSI colors                                                                            |
 
 ### `ripple doctor`
 
