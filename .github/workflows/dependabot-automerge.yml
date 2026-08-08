@@ -1,0 +1,32 @@
+# Dependabot needs an approval before auto-merge can act under the
+# branch protection rules. Approve and arm auto-merge for its PRs
+# (squash); merges still wait for the full CI suite to be green.
+
+name: Dependabot automerge
+
+on:
+  pull_request_target:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Approve the PR
+        run: gh pr review "$PR" --approve --body "Dependabot — approved for auto-merge once checks pass."
+        env:
+          PR: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Enable auto-merge
+        run: gh pr merge "$PR" --auto --squash
+        env:
+          PR: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
