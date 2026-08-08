@@ -24,6 +24,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   eliminates the intermittent timeouts of the heavy ts-morph suites.
 - `npm publish` warning about the `bin` path is gone (`npm pkg fix`).
 - Line endings are normalized repo-wide via `.gitattributes`.
+- esbuild lifted to 0.28.1 to close Dependabot alert #1 (arbitrary file
+  read via the dev server on Windows) and satisfy vite's peer requirement.
 
 ## [0.3.0] - 2026-08-08
 
