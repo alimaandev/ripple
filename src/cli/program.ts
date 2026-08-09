@@ -14,6 +14,15 @@ import { ExitCode, type CommandContext, type DiffFormat } from "../types/cli.js"
 
 const PROGRAM_NAME = "ripple";
 
+/**
+ * One-line usage examples appended to a command's `--help` output, so the
+ * CLI itself documents realistic invocations (issues #4, #9).
+ */
+function helpExamples(examples: string[]): string {
+  const lines = examples.map((example) => `  ${example}`);
+  return `\nExamples:\n${lines.join("\n")}\n`;
+}
+
 export function createProgram(ctx: CommandContext): Command {
   const program = new Command()
     .name(PROGRAM_NAME)
@@ -24,6 +33,13 @@ export function createProgram(ctx: CommandContext): Command {
   program
     .command("analyze <file>")
     .description("Analyze the impact of changing a file")
+    .addHelpText(
+      "after",
+      helpExamples([
+        "ripple analyze src/authentication/login.ts",
+        "ripple analyze src/index.ts --depth 3",
+      ]),
+    )
     .option("-j, --json", "emit a machine-readable JSON report")
     .option("-v, --verbose", "include the risk factor breakdown")
     .option("-d, --depth <number>", "cap the reverse traversal depth", parsePositiveInt)
@@ -49,6 +65,10 @@ export function createProgram(ctx: CommandContext): Command {
   program
     .command("graph [file]")
     .description("Show project graph stats, or the dependency tree of one file")
+    .addHelpText(
+      "after",
+      helpExamples(["ripple graph", "ripple graph src/index.ts --reverse --depth 3"]),
+    )
     .option("-j, --json", "emit a machine-readable JSON report")
     .option("-v, --verbose", "include extra sections")
     .option("-r, --reverse", "show dependents (what imports the file) instead of dependants")
@@ -76,6 +96,10 @@ export function createProgram(ctx: CommandContext): Command {
   program
     .command("diff")
     .description("Analyze changed files since a base ref and gate risky changes")
+    .addHelpText(
+      "after",
+      helpExamples(["ripple diff --base main --gate critical", "ripple diff --format github"]),
+    )
     .option("-j, --json", "emit a machine-readable JSON report")
     .option("-f, --format <format>", "output format: terminal | json | github", parseDiffFormat)
     .option("-v, --verbose", "include extra sections")
@@ -112,6 +136,7 @@ export function createProgram(ctx: CommandContext): Command {
   program
     .command("doctor")
     .description("Check the project and environment for Ripple readiness")
+    .addHelpText("after", helpExamples(["ripple doctor", "ripple doctor -v"]))
     .option("-v, --verbose", "print detailed diagnostics")
     .option("-c, --config <path>", "path to a ripple config file")
     .option("--no-color", "disable ANSI colors")
@@ -132,6 +157,7 @@ export function createProgram(ctx: CommandContext): Command {
   program
     .command("init")
     .description("Create a ripple.config.json with the default settings")
+    .addHelpText("after", helpExamples(["ripple init", "ripple init --force"]))
     .option("-f, --force", "overwrite an existing config file")
     .option("--no-color", "disable ANSI colors")
     .action(async (options: Record<string, unknown>) => {
@@ -147,6 +173,7 @@ export function createProgram(ctx: CommandContext): Command {
   program
     .command("version")
     .description("Print the Ripple version")
+    .addHelpText("after", helpExamples(["ripple version"]))
     .action(() => {
       ctx.writer.writeLine(ctx.version);
     });

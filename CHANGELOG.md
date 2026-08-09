@@ -6,6 +6,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- One-line usage examples in `ripple <command> --help` for every command
+  (closes #4 / #9).
+- CI enforces a global coverage floor for `src/**` on the unit suite
+  (statements 65 / branches 50 / functions 68 / lines 65) (closes #6).
+- Integration test covering `graph --json` on an aliased project — aliased
+  imports resolve through the graph and the stable contract holds (closes #5).
+
 ### Security
 
 - esbuild pinned to `^0.28.1` across the whole dependency tree via a pnpm

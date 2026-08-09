@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { describe, expect, it } from "vitest";
-import { basicFixture } from "../helpers/fixtures.js";
+import { basicFixture, fixturePath } from "../helpers/fixtures.js";
 import { fileURLToPath } from "node:url";
 
 /**
@@ -136,6 +136,47 @@ describe("ripple graph", () => {
     expect(result.stdout).toContain("Circular groups  1");
     expect(result.stdout).toContain("src/circular/a.ts → src/circular/c.ts");
   });
+});
+
+describe("ripple graph --json on an aliased project", () => {
+  it("resolves aliased imports and keeps the stable contract", { timeout: 90_000 }, () => {
+    const result = runCli(["graph", "--json"], fixturePath("aliases"));
+    expect(result.code).toBe(0);
+    const report = JSON.parse(result.stdout) as {
+      tool: string;
+      command: string;
+      fileCount: number;
+      edgeCount: number;
+      cycles: unknown[];
+    };
+    expect(report.tool).toBe("ripple");
+    expect(report.command).toBe("graph");
+    // Two sources plus the fixture's own ripple.config.ts (scanned as a node,
+    // no edges).
+    expect(report.fileCount).toBe(3);
+    expect(report.edgeCount).toBe(1);
+    expect(report.cycles).toHaveLength(0);
+  });
+});
+
+describe("ripple --help examples", () => {
+  const examples: Array<[string, string]> = [
+    ["analyze", "ripple analyze src/authentication/login.ts"],
+    ["graph", "ripple graph src/index.ts --reverse --depth 3"],
+    ["diff", "ripple diff --base main --gate critical"],
+    ["doctor", "ripple doctor -v"],
+    ["init", "ripple init --force"],
+    ["version", "ripple version"],
+  ];
+
+  for (const [command, example] of examples) {
+    it(`shows a usage example for ${command}`, { timeout: 60_000 }, () => {
+      const result = runCli([command, "--help"], basicFixture);
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("Examples:");
+      expect(result.stdout).toContain(example);
+    });
+  }
 });
 
 describe("ripple doctor", () => {
