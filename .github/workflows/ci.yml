@@ -60,6 +60,20 @@ jobs:
       - run: pnpm run build
       - run: node dist/bin.js version
 
+  # Coverage floor for src/** — enforced on the unit suite only, since the
+  # integration tests spawn the CLI as a child process (not instrumented).
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec vitest run tests/unit --coverage
+
   # Dogfooding: Ripple gates its own pull requests. Any changed source file
   # that reaches HIGH risk blocks the merge — the same check we recommend
   # every Ripple user runs on their own repos. The github format surfaces

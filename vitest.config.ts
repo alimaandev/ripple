@@ -14,6 +14,15 @@ export default defineConfig({
       provider: "v8",
       include: ["src/**/*.ts"],
       exclude: ["src/cli/bin.ts"],
+      // Global floor for the unit suite. Integration tests spawn the CLI in a
+      // child process (not instrumented), so thresholds are measured against
+      // tests/unit only — `vitest run tests/unit --coverage`.
+      thresholds: {
+        statements: 65,
+        branches: 50,
+        functions: 68,
+        lines: 65,
+      },
     },
   },
 });
