@@ -130,7 +130,7 @@ Expected output:
 
 ```text
 ╭ ripple ────────────────────────────╮
-│  ❯ impact analysis · v0.2.0        │
+│  ❯ impact analysis · v0.5.0        │
 ╰────────────────────────────────────╯
 
 File        src/authentication/login.ts
@@ -168,7 +168,7 @@ ripple graph
 
 ```text
 ╭ ripple ────────────────────────────╮
-│  ❯ dependency graph · v0.2.0       │
+│  ❯ dependency graph · v0.5.0       │
 ╰────────────────────────────────────╯
 
 Files            25
@@ -201,14 +201,14 @@ Dependents (reverse)
 ripple <command> [options]
 ```
 
-| Command          | Description                                       |
-| ---------------- | ------------------------------------------------- |
-| `analyze <file>` | Impact analysis for a target file                 |
-| `graph [file]`   | Project stats, or a single file's dependency tree |
-| `diff`           | Gate all files changed since a git base ref       |
-| `doctor`         | Project and environment health check              |
-| `init`           | Scaffold a `ripple.config.json`                   |
-| `version`        | Print the current version                         |
+| Command          | Description                                       | Example                                                    |
+| ---------------- | ------------------------------------------------- | ---------------------------------------------------------- |
+| `analyze <file>` | Impact analysis for a target file                 | `ripple analyze src/authentication/login.ts`               |
+| `graph [file]`   | Project stats, or a single file's dependency tree | `ripple graph src/circular/b.ts -r`                         |
+| `diff`           | Gate all files changed since a git base ref       | `ripple diff --base main --gate critical`                    |
+| `doctor`         | Project and environment health check              | `ripple doctor -v`                                          |
+| `init`           | Scaffold a `ripple.config.json`                   | `ripple init`                                               |
+| `version`        | Print the current version                         | `ripple version`                                            |
 
 ### Options
 
@@ -418,7 +418,7 @@ error-tolerant recovery, `graph/` resolves specifiers and detects cycles, and
 ```json
 {
   "tool": "ripple",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "command": "analyze",
   "file": "src/authentication/login.ts",
   "risk": { "score": 34.4, "level": "MEDIUM", "factors": [] },
@@ -469,7 +469,7 @@ verdict:
 ```json
 {
   "tool": "ripple",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "command": "diff",
   "base": "origin/main",
   "changedFiles": 2,
@@ -578,6 +578,11 @@ pnpm run build          # tsup
 
 Architecture and design decisions live in [docs/architecture.md](docs/architecture.md).
 Before contributing, read [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Quality gates run on every pull request: lint, typecheck, build, unit tests
+(against a global coverage floor for `src/**`), integration tests on Linux
+and Windows, and a dogfood job — Ripple gates its own PRs with
+`ripple diff --format github`.
 
 ## Get started
 
