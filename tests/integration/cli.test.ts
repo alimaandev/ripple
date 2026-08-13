@@ -138,6 +138,72 @@ describe("ripple graph", () => {
   });
 });
 
+describe("ripple graph export formats", () => {
+  const timeout = 90_000;
+
+  it("exports the project graph as Mermaid", { timeout }, () => {
+    const result = runCli(["graph", "--format", "mermaid"], basicFixture);
+    expect(result.code).toBe(0);
+    expect(result.stdout.startsWith("flowchart LR")).toBe(true);
+    expect(result.stdout).toContain('"src/authentication/login.ts"');
+    expect(result.stdout).toContain('"src/circular/a.ts"');
+    expect(result.stdout).toContain("-->");
+    expect(result.stdout).toContain("classDef cycle");
+  });
+
+  it("exports the project graph as Graphviz DOT", { timeout }, () => {
+    const result = runCli(["graph", "--format", "dot"], basicFixture);
+    expect(result.code).toBe(0);
+    expect(result.stdout.startsWith("digraph ripple {")).toBe(true);
+    expect(result.stdout).toContain('"src/authentication/login.ts"');
+    expect(result.stdout).toContain('-> "src/authentication/oauth.ts"');
+    expect(result.stdout).toContain('color="#f85149"');
+  });
+
+  it("exports the project graph as a self-contained HTML report", { timeout }, () => {
+    const result = runCli(["graph", "--format", "html"], basicFixture);
+    expect(result.code).toBe(0);
+    expect(result.stdout.startsWith("<!DOCTYPE html>")).toBe(true);
+    expect(result.stdout).toContain("<b>25</b>"); // files
+    expect(result.stdout).toContain("<h2>Circular dependencies</h2>");
+    expect(result.stdout).toContain("<td>src/authentication/login.ts</td>");
+  });
+
+  it("scopes an export to a file's reachable subgraph", { timeout }, () => {
+    const result = runCli(
+      ["graph", "src/authentication/login.ts", "--format", "mermaid"],
+      basicFixture,
+    );
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain('n0["src/authentication/login.ts"]');
+    expect(result.stdout).toContain('"src/authentication/oauth.ts"');
+    expect(result.stdout).not.toContain("src/circular/");
+  });
+
+  it("scopes a reverse export to the file's dependents", { timeout }, () => {
+    const result = runCli(
+      ["graph", "src/authentication/login.ts", "--format", "mermaid", "--reverse"],
+      basicFixture,
+    );
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain('"src/authentication/login.ts"');
+    expect(result.stdout).toContain('"src/index.ts"');
+    expect(result.stdout).not.toContain("src/authentication/oauth.ts");
+  });
+
+  it("rejects an unknown format", { timeout }, () => {
+    const result = runCli(["graph", "--format", "svg"], basicFixture);
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain("expected one of terminal | json | mermaid | dot | html");
+  });
+
+  it("keeps export output free of progress noise", { timeout }, () => {
+    const result = runCli(["graph", "--format", "mermaid"], basicFixture);
+    expect(result.stdout).not.toMatch(/✔ Building/);
+    expect(result.stdout).not.toMatch(/Loading config/);
+  });
+});
+
 describe("ripple graph --json on an aliased project", () => {
   it("resolves aliased imports and keeps the stable contract", { timeout: 90_000 }, () => {
     const result = runCli(["graph", "--json"], fixturePath("aliases"));

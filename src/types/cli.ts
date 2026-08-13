@@ -28,7 +28,12 @@ export interface GraphOptions {
   /** Cap on tree depth. */
   depth?: number;
   config?: string;
+  /** Output format; `json` falls back to `--json` parsing. */
+  format?: GraphFormat;
 }
+
+/** Supported output formats for `ripple graph`. */
+export type GraphFormat = "terminal" | "json" | "mermaid" | "dot" | "html";
 
 /** Parsed command-line options for `ripple doctor`. */
 export interface DoctorOptions {
