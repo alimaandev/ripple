@@ -46,6 +46,12 @@ export interface DiffConfig {
   base?: string;
   /** Minimum risk level that fails the diff gate. Defaults to `"high"`. */
   gate: GateLevel;
+  /**
+   * Glob patterns (relative to the project root) of files that are analyzed
+   * and reported but never block the gate. Useful for adopting the gate on
+   * legacy code without fixing every pre-existing risk on day one.
+   */
+  allow: string[];
 }
 
 /**

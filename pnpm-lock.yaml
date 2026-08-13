@@ -32,6 +32,9 @@ importers:
       ora:
         specifier: ^9.4.1
         version: 9.4.1
+      picomatch:
+        specifier: ^4.0.5
+        version: 4.0.5
       treeify:
         specifier: ^1.1.0
         version: 1.1.0
@@ -48,6 +51,9 @@ importers:
       '@types/node':
         specifier: ^26.1.2
         version: 26.1.2
+      '@types/picomatch':
+        specifier: ^4.0.3
+        version: 4.0.3
       '@types/treeify':
         specifier: ^1.0.3
         version: 1.0.3
@@ -606,6 +612,9 @@ packages:
 
   '@types/node@26.1.2':
     resolution: {integrity: sha512-Vu4a5UFA9rIIFJ7rB/Vaafh9lrCQszopTCx6KjFboXTGQbPNasehVR5TEiithSDGyd1DEiUByggTZsg8jukeIg==}
+
+  '@types/picomatch@4.0.3':
+    resolution: {integrity: sha512-iG0T6+nYJ9FAPmx9SsUlnwcq1ZVRuCXcVEvWnntoPlrOpwtSTKNDC9uVAxTsC3PUvJ+99n4RpAcNgBbHX3JSnQ==}
 
   '@types/treeify@1.0.3':
     resolution: {integrity: sha512-hx0o7zWEUU4R2Amn+pjCBQQt23Khy/Dk56gQU5xi5jtPL1h83ACJCeFaB2M/+WO1AntvWrSoVnnCAfI1AQH4Cg==}
@@ -1933,6 +1942,8 @@ snapshots:
   '@types/node@26.1.2':
     dependencies:
       undici-types: 8.3.0
+
+  '@types/picomatch@4.0.3': {}
 
   '@types/treeify@1.0.3': {}
 

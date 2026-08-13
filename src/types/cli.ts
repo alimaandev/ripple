@@ -67,6 +67,8 @@ export interface DiffOptions {
   gate?: "medium" | "high" | "critical";
   /** Cap on reverse traversal depth per file. */
   depth?: number;
+  /** Glob patterns of changed files exempted from blocking the gate. */
+  allow?: string[];
   config?: string;
 }
 

@@ -120,6 +120,7 @@ export function createProgram(ctx: CommandContext): Command {
       parseGateLevel,
     )
     .option("-d, --depth <number>", "cap the reverse traversal depth", parsePositiveInt)
+    .option("-a, --allow <glob...>", "changed files matching these globs never block the gate")
     .option("-c, --config <path>", "path to a ripple config file")
     .option("--no-color", "disable ANSI colors")
     .action(async (options: Record<string, unknown>) => {
@@ -133,6 +134,7 @@ export function createProgram(ctx: CommandContext): Command {
             ? { gate: options.gate as "medium" | "high" | "critical" }
             : {}),
           ...(options.depth !== undefined ? { depth: options.depth as number } : {}),
+          ...(options.allow !== undefined ? { allow: options.allow as string[] } : {}),
           ...(options.config !== undefined ? { config: options.config as string } : {}),
           color: options.color as boolean | undefined,
         },

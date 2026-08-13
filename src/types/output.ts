@@ -46,6 +46,8 @@ export interface DiffFileReport {
   risk?: RiskResult;
   affectedFiles?: number;
   targetInCycle?: boolean;
+  /** Whether the file matched the diff allowlist and cannot block the gate. */
+  allowed?: boolean;
 }
 
 /** Minimum risk level that blocks the `ripple diff` gate. */
@@ -67,6 +69,8 @@ export interface DiffJsonReport {
     level: GateLevel;
     blocked: boolean;
     counts: Record<"low" | "medium" | "high" | "critical", number>;
+    /** Number of changed files exempted from blocking via the allowlist. */
+    allowed: number;
   };
   durationMs: number;
 }

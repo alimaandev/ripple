@@ -1,5 +1,6 @@
 import path from "node:path";
 import chalk from "chalk";
+import picomatch from "picomatch";
 import { loadProjectContext } from "../config/loader.js";
 import { analyzeFile } from "../analyzer/analyze.js";
 import { createStageTracker } from "../ui/progress.js";
@@ -23,7 +24,7 @@ import {
   renderAnnotation,
 } from "../formatter/annotations.js";
 import { runPipeline } from "./pipeline.js";
-import { displayPath, pathKey } from "../utils/paths.js";
+import { displayPath, pathKey, toPosix } from "../utils/paths.js";
 import { ExitCode } from "../types/cli.js";
 import type { AnalysisResult } from "../types/analysis.js";
 import type { CommandContext, DiffOptions, OutputWriter } from "../types/cli.js";
@@ -61,6 +62,18 @@ export function countLevels(results: AnalysisResult[]): DiffCounts {
     counts[result.risk.level.toLowerCase() as keyof DiffCounts] += 1;
   }
   return counts;
+}
+
+/**
+ * Whether a project-relative path matches any of the diff allowlist globs.
+ * Patterns and paths are normalized to forward slashes so the same config
+ * works on Windows and POSIX.
+ */
+export function isAllowedByDiffAllowlist(relPath: string, patterns: string[]): boolean {
+  if (patterns.length === 0) return false;
+  const rel = toPosix(relPath);
+  const matcher = picomatch(patterns.map(toPosix), { dot: true });
+  return matcher(rel);
 }
 
 /** `2 HIGH · 1 CRITICAL` — counts for levels at or above the gate. */
@@ -115,9 +128,19 @@ export async function diffCommand(options: DiffOptions, ctx: CommandContext): Pr
   }
   tracker.done();
 
-  const results = [...byRel.values()].sort((a, b) => b.risk.score - a.risk.score);
-  const counts = countLevels(results);
-  const blocked = results.some((result) => LEVEL_INDEX[result.risk.level] >= GATE_INDEX[gate]);
+  const allowPatterns = [...(options.allow ?? []), ...(context.config.diff.allow ?? [])];
+  const allowedByRel = new Map<string, boolean>();
+  for (const rel of byRel.keys()) {
+    allowedByRel.set(rel, isAllowedByDiffAllowlist(rel, allowPatterns));
+  }
+
+  const entries = [...byRel.entries()]
+    .map(([rel, result]) => ({ rel, result, allowed: allowedByRel.get(rel) ?? false }))
+    .sort((a, b) => b.result.risk.score - a.result.risk.score);
+  const gateResults = entries.filter((entry) => !entry.allowed).map((entry) => entry.result);
+  const counts = countLevels(gateResults);
+  const allowedCount = entries.filter((entry) => entry.allowed).length;
+  const blocked = gateResults.some((result) => LEVEL_INDEX[result.risk.level] >= GATE_INDEX[gate]);
   const durationMs = Date.now() - started;
 
   if (format === "json") {
@@ -127,9 +150,11 @@ export async function diffCommand(options: DiffOptions, ctx: CommandContext): Pr
           changed.baseLabel,
           changed.files,
           byRel,
+          allowedByRel,
           gate,
           blocked,
           counts,
+          allowedCount,
           durationMs,
           ctx.version,
         ),
@@ -141,7 +166,9 @@ export async function diffCommand(options: DiffOptions, ctx: CommandContext): Pr
   if (format === "github") {
     const annotations = [
       ...buildFileAnnotations(
-        [...byRel.entries()].map(([file, result]) => ({ file, result })),
+        [...byRel.entries()]
+          .filter(([rel]) => !(allowedByRel.get(rel) ?? false))
+          .map(([file, result]) => ({ file, result })),
         gate,
       ),
       buildGateAnnotation(blocked, gate, counts),
@@ -155,9 +182,10 @@ export async function diffCommand(options: DiffOptions, ctx: CommandContext): Pr
       cwd: ctx.cwd,
       baseLabel: changed.baseLabel,
       files: changed.files,
-      results,
+      entries,
       skipped,
       counts,
+      allowedCount,
       gate,
       blocked,
       durationMs,
@@ -173,9 +201,10 @@ export interface DiffRenderInput {
   cwd: string;
   baseLabel: string;
   files: string[];
-  results: AnalysisResult[];
+  entries: Array<{ rel: string; result: AnalysisResult; allowed: boolean }>;
   skipped: string[];
   counts: DiffCounts;
+  allowedCount: number;
   gate: GateLevel;
   blocked: boolean;
   durationMs: number;
@@ -183,15 +212,27 @@ export interface DiffRenderInput {
 }
 
 export function renderDiffReport(input: DiffRenderInput, writer: OutputWriter): void {
-  const { cwd, baseLabel, files, results, skipped, counts, gate, blocked, durationMs, style } =
-    input;
+  const {
+    cwd,
+    baseLabel,
+    files,
+    entries,
+    skipped,
+    counts,
+    allowedCount,
+    gate,
+    blocked,
+    durationMs,
+    style,
+  } = input;
 
   writer.writeLine(brandHeader({ label: `diff vs ${baseLabel}`, style }));
   writer.writeLine();
 
   const rows: Array<[string, string]> = [
     ["Changed", pluralize(files.length, "file")],
-    ["Source", pluralize(results.length, "file")],
+    ["Source", pluralize(entries.length, "file")],
+    ["Allowed", pluralize(allowedCount, "file")],
     ["Duration", dim(formatDuration(durationMs), style)],
   ];
   const width = Math.max(...rows.map(([key]) => key.length));
@@ -210,8 +251,8 @@ export function renderDiffReport(input: DiffRenderInput, writer: OutputWriter): 
   );
   writer.writeLine();
 
-  writer.writeLine(sectionHeader(`Risk analysis (${results.length} files)`, style));
-  for (const result of results) {
+  writer.writeLine(sectionHeader(`Risk analysis (${entries.length} files)`, style));
+  for (const { result, allowed } of entries) {
     const risky = LEVEL_INDEX[result.risk.level] >= GATE_INDEX[gate];
     const fileIcon = risky ? icon("cross") : icon("tick");
     const fileIconText = style.color
@@ -222,8 +263,9 @@ export function renderDiffReport(input: DiffRenderInput, writer: OutputWriter): 
     const score = result.risk.score.toFixed(1);
     const gauge = riskGauge(result.risk.score, result.risk.level, style);
     const file = displayPath(result.targetPath, cwd);
+    const allowedTag = allowed ? ` ${dim("(allowed)", style)}` : "";
     writer.writeLine(
-      `${fileIconText} ${file}  ${riskBadge(result.risk.level, style)} · ${score}/100${gauge ? ` ${gauge}` : ""}`,
+      `${fileIconText} ${file}  ${riskBadge(result.risk.level, style)} · ${score}/100${gauge ? ` ${gauge}` : ""}${allowedTag}`,
     );
   }
   // skipped files
@@ -239,9 +281,11 @@ export function buildDiffJsonReport(
   baseLabel: string,
   changedFileNames: string[],
   byRel: Map<string, AnalysisResult>,
+  allowedByRel: Map<string, boolean>,
   gate: GateLevel,
   blocked: boolean,
   counts: DiffCounts,
+  allowedCount: number,
   durationMs: number,
   version: string,
 ): DiffJsonReport {
@@ -255,6 +299,7 @@ export function buildDiffJsonReport(
         risk: result.risk,
         affectedFiles: result.summary.affectedFiles,
         targetInCycle: result.targetInCycle,
+        allowed: allowedByRel.get(rel) ?? false,
       });
     } else {
       files.push({ file: rel, analyzed: false });
@@ -269,7 +314,7 @@ export function buildDiffJsonReport(
     base: baseLabel,
     changedFiles: changedFileNames.length,
     files,
-    gate: { level: gate, blocked, counts },
+    gate: { level: gate, blocked, counts, allowed: allowedCount },
     durationMs,
   };
 }
