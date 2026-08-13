@@ -24,12 +24,8 @@
   <text x="32" y="76" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">$</text>
   <text x="48" y="76" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#79c0ff">ripple analyze src/authentication/login.ts</text>
 
-  <text x="32" y="104" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#79c0ff">╭ ripple ─────────────────────╮</text>
-  <text x="32" y="126" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#79c0ff">│</text>
-  <text x="40" y="126" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#79c0ff">❯</text>
-  <text x="55" y="126" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">impact analysis · v0.5.0</text>
-  <text x="262" y="126" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#79c0ff">│</text>
-  <text x="32" y="148" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#79c0ff">╰─────────────────────────────╯</text>
+  <text x="32" y="104" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" font-weight="700" fill="#79c0ff">ripple · impact analysis</text>
+  <text x="225" y="104" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">· v0.6.0</text>
 
   <text x="32" y="176" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#79c0ff">File</text>
   <text x="150" y="176" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">src/authentication/login.ts</text>
@@ -55,9 +51,7 @@
   <text x="32" y="286" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#79c0ff">Confidence</text>
   <text x="150" y="286" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#3fb950">100%</text>
 
-  <line x1="32" y1="304" x2="728" y2="304" stroke="#21262d"/>
-
-  <text x="32" y="326" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" font-weight="700" fill="#e6edf3">Top impact</text>
+  <text x="32" y="326" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" font-weight="700" fill="#e6edf3">› Top impact</text>
   <text x="48" y="348" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">●</text>
   <text x="62" y="348" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">Dashboard</text>
   <text x="155" y="348" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">(2)</text>
@@ -68,9 +62,7 @@
   <text x="62" y="392" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">Index TS</text>
   <text x="145" y="392" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">(1)</text>
 
-  <line x1="32" y1="410" x2="728" y2="410" stroke="#21262d"/>
-
-  <text x="32" y="432" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" font-weight="700" fill="#e6edf3">Circular dependencies</text>
+  <text x="32" y="432" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" font-weight="700" fill="#e6edf3">› Circular dependencies</text>
   <text x="32" y="454" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">◯</text>
   <text x="48" y="454" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">src/circular/a.ts</text>
   <text x="173" y="454" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">→</text>
@@ -80,9 +72,7 @@
   <text x="447" y="454" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">→</text>
   <text x="459" y="454" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">src/circular/a.ts</text>
 
-  <line x1="32" y1="472" x2="728" y2="472" stroke="#21262d"/>
-
-  <text x="32" y="494" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" font-weight="700" fill="#e6edf3">Affected files (7)</text>
+  <text x="32" y="494" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" font-weight="700" fill="#e6edf3">› Affected files (7)</text>
   <text x="48" y="516" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">├─ src/dashboard/page.tsx</text>
   <text x="220" y="516" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">· depth 1</text>
   <text x="48" y="538" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">└─ src/main.ts</text>

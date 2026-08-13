@@ -69,19 +69,22 @@ Just deterministic analysis against the code you actually have.
 
 ## Features
 
-| Feature                      | What it does                                                                                                     |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| **Impact analysis**          | Reverse dependency traversal, transitively, with depth caps. Know who imports a target file.                     |
-| **Risk scoring**             | A transparent 0–100 score from seven weighted signals, with a per-factor breakdown in `--verbose`.               |
-| **Cycle detection**          | Strongly-connected components with a concrete cycle path — `a → c → b → a`, not just a list of names.            |
-| **Alias & path support**     | tsconfig `paths` and custom aliases like `{ "@": "./src" }`, including single-wildcard patterns.                 |
-| **Real-world resolution**    | Extension probing, index files, `.js` → `.ts` rewriting, dynamic `import()`, `require()`, `export … from`.       |
-| **Categorized results**      | Routes, layouts, components, utilities, and tests detected by path conventions — not a raw string of file names. |
-| **Entry-point intelligence** | `package.json` `main`/`bin` plus conventional root and `src` entry files, flagged in the report.                 |
-| **Stable JSON contract**     | A machine-readable report for CI gates, dashboards, and tooling — additive-only compatibility.                   |
-| **Change-set gating**        | `ripple diff` analyzes every changed file since a base ref and blocks the merge on risky code.                   |
-| **Error-tolerant parsing**   | A broken file lowers confidence instead of aborting the run. No false precision.                                 |
-| **Deterministic & offline**  | Same input, same output, every time. No hidden network dependency.                                               |
+| Feature                      | What it does                                                                                                            |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **Impact analysis**          | Reverse dependency traversal, transitively, with depth caps. Know who imports a target file.                            |
+| **Risk scoring**             | A transparent 0–100 score from seven weighted signals, with a per-factor breakdown in `--verbose`.                      |
+| **Cycle detection**          | Strongly-connected components with a concrete cycle path — `a → c → b → a`, not just a list of names.                   |
+| **Alias & path support**     | tsconfig `paths` and custom aliases like `{ "@": "./src" }`, including single-wildcard patterns.                        |
+| **Real-world resolution**    | Extension probing, index files, `.js` → `.ts` rewriting, dynamic `import()`, `require()`, `export … from`.              |
+| **Categorized results**      | Routes, layouts, components, utilities, and tests detected by path conventions — not a raw string of file names.        |
+| **Entry-point intelligence** | `package.json` `main`/`bin` plus conventional root and `src` entry files, flagged in the report.                        |
+| **Stable JSON contract**     | A machine-readable report for CI gates, dashboards, and tooling — additive-only compatibility.                          |
+| **Change-set gating**        | `ripple diff` analyzes every changed file since a base ref and blocks the merge on risky code.                          |
+| **Diff allowlist**           | `--allow <glob>` (or `diff.allow` in config) exempts legacy files from blocking the gate — analyze, report, don't fail. |
+| **Graph exports**            | `ripple graph --format mermaid                                                                                          | dot | html` renders the project graph as a Mermaid flowchart, Graphviz digraph, or a self-contained HTML report. |
+| **Config JSON Schema**       | Editors autocomplete and validate `ripple.config.json` against the shipped `ripple.schema.json` via `$schema`.          |
+| **Error-tolerant parsing**   | A broken file lowers confidence instead of aborting the run. No false precision.                                        |
+| **Deterministic & offline**  | Same input, same output, every time. No hidden network dependency.                                                      |
 
 ## Quick start
 
@@ -97,7 +100,7 @@ Everything below is real output against a shipped example project in `tests/fixt
 ```bash
 npm install -g @alimaandev/ripple
 
-ripple version                  # → 0.5.0
+ripple version                  # → 0.6.0
 ```
 
 Or install from source:
@@ -129,9 +132,7 @@ ripple analyze src/authentication/login.ts
 Expected output:
 
 ```text
-╭ ripple ────────────────────────────╮
-│  ❯ impact analysis · v0.5.0        │
-╰────────────────────────────────────╯
+ripple · impact analysis · v0.6.0
 
 File        src/authentication/login.ts
 Risk        MEDIUM · 34.7/100 ███░░░░░░░
@@ -140,18 +141,15 @@ Affected    7 files
 Max depth   2
 Confidence  100%
 
-────────────────────────────────────
-Top impact
+› Top impact
 ● Dashboard (2)
 ● Admin (1)
 ● Index TS (1)
 
-────────────────────────────────────
-Circular dependencies
+› Circular dependencies
 ◯ src/circular/a.ts → src/circular/c.ts → src/circular/b.ts → src/circular/a.ts
 
-────────────────────────────────────
-Affected files (7)
+› Affected files (7)
 ├─ src/admin/page.tsx · depth 1
 ├─ src/dashboard/page.tsx · depth 1
 └─ src/main.ts · depth 2
@@ -167,9 +165,7 @@ ripple graph
 ```
 
 ```text
-╭ ripple ────────────────────────────╮
-│  ❯ dependency graph · v0.5.0       │
-╰────────────────────────────────────╯
+ripple · dependency graph · v0.6.0
 
 Files            25
 Edges            28
@@ -177,9 +173,17 @@ External         4
 Unresolved       0
 Circular groups  1
 
-────────────────────────────────────
-Circular dependencies
+› Circular dependencies
 ◯ src/circular/a.ts → src/circular/c.ts → src/circular/b.ts → src/circular/a.ts
+```
+
+Export the graph for documentation or a team wiki — no extra tooling needed:
+
+```bash
+ripple graph --format mermaid   # Mermaid flowchart (GitHub renders it natively)
+ripple graph --format dot       # Graphviz digraph
+ripple graph --format html      # self-contained dark-themed HTML report
+ripple graph src/authentication/login.ts --format mermaid   # just a file's blast radius
 ```
 
 Point it at a file to see its dependency tree — forwards (what it imports)
@@ -263,6 +267,15 @@ $ ripple doctor
 ### `ripple init`
 
 Writes `ripple.config.json` with the recommended defaults, ready to edit.
+The minimal config references the shipped JSON Schema so editors
+autocomplete and validate as you type:
+
+```bash
+ripple init                # minimal ripple.config.json + $schema
+ripple init --full         # every built-in default, written out
+ripple init --ts           # typed ripple.config.ts
+ripple init --ts --full    # full defaults as TypeScript
+```
 
 ### `ripple diff`
 
@@ -276,23 +289,27 @@ cd my-project
 ripple diff                       # vs origin/main (then main, then HEAD~1)
 ripple diff --base HEAD~1 --json  # machine-readable gate report
 ripple diff --gate critical       # only CRITICAL blocks the merge
+ripple diff --allow "src/legacy/**"   # legacy files never block the gate
 ```
 
+Adopting the gate on an existing codebase? Allowlist the files you haven't
+fixed yet — they are still analyzed and shown in the report, marked
+`(allowed)`, but they can't fail CI. The same list lives in config as
+`diff.allow`, so the whole team shares it.
+
 ```text
-╭ ripple ─────────────────────╮
-│  ❯ diff vs origin/main      │
-╰─────────────────────────────╯
+ripple · diff vs origin/main
 
 Changed  2 files
 Source   2 files
+Allowed  1 file
 Duration 118ms
 
-✖ Gate blocked — 1 CRITICAL (no HIGH or CRITICAL)
+✔ Gate passed — none (no HIGH or CRITICAL)
 
-─────────────────────────────────────
-Risk analysis (2 files)
+› Risk analysis (2 files)
 ✖ src/auth/token.ts     CRITICAL · 88.2/100 ████████░░
-● src/auth/session.ts   LOW · 12.4/100 █░░░░░░░░░
+✔ src/legacy/session.ts LOW · 12.4/100 █░░░░░░░░░ (allowed)
 … src/api/legacy.js     (not a source file)
 ```
 
@@ -324,6 +341,7 @@ defaults — every field is optional.
 
 ```json
 {
+  "$schema": "./node_modules/@alimaandev/ripple/ripple.schema.json",
   "include": ["**/*.{ts,tsx,js,jsx}"],
   "ignore": ["node_modules", "dist", "build", "coverage", ".next", "out"],
   "aliases": { "@": "./src" },
@@ -342,10 +360,15 @@ defaults — every field is optional.
   },
   "diff": {
     "base": "origin/main",
-    "gate": "high"
+    "gate": "high",
+    "allow": ["src/legacy/**"]
   }
 }
 ```
+
+> [!TIP]
+> The `$schema` line powers editor autocomplete and validation for
+> `ripple.config.json` — the package ships `ripple.schema.json` for it.
 
 | Field             | Default                                                     | Purpose                                                |
 | ----------------- | ----------------------------------------------------------- | ------------------------------------------------------ |
@@ -356,6 +379,7 @@ defaults — every field is optional.
 | `risk.weights`    | see example                                                 | Risk signal weights                                    |
 | `risk.thresholds` | 30 / 55 / 80                                                | Score thresholds for MEDIUM / HIGH / CRITICAL          |
 | `diff.base`       | `origin/main` → `main` → `HEAD~1`                           | Git ref to diff against when `--base` is not given     |
+| `diff.allow`      | `[]`                                                        | Globs of files that never block the gate               |
 | `diff.gate`       | `high`                                                      | Blocking level when `--gate` is not given              |
 
 `node_modules` is always excluded, regardless of config.
