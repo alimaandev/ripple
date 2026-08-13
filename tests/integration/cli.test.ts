@@ -289,6 +289,59 @@ describe("ripple init", () => {
     const forced = runCli(["init", "--force"], dir);
     expect(forced.code).toBe(0);
   });
+
+  it("writes a minimal config that references the JSON Schema", { timeout: 90_000 }, () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ripple-init-min-"));
+    const result = runCli(["init"], dir);
+    expect(result.code).toBe(0);
+    const config = JSON.parse(fs.readFileSync(path.join(dir, "ripple.config.json"), "utf8")) as {
+      $schema: string;
+      include: string[];
+      risk?: unknown;
+      diff?: unknown;
+    };
+    expect(config.$schema).toContain("ripple.schema.json");
+    expect(config.include).toContain("**/*.{ts,tsx,js,jsx}");
+    expect(config.risk).toBeUndefined();
+    expect(config.diff).toBeUndefined();
+  });
+
+  it("writes the full defaults with --full", { timeout: 90_000 }, () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ripple-init-full-"));
+    const result = runCli(["init", "--full"], dir);
+    expect(result.code).toBe(0);
+    const config = JSON.parse(fs.readFileSync(path.join(dir, "ripple.config.json"), "utf8")) as {
+      $schema: string;
+      risk: { weights: Record<string, number>; thresholds: Record<string, number> };
+      diff: { gate: string; allow: string[] };
+    };
+    expect(config.$schema).toContain("ripple.schema.json");
+    expect(config.risk.weights.affectedFiles).toBe(0.3);
+    expect(config.risk.thresholds.high).toBe(55);
+    expect(config.diff.gate).toBe("high");
+    expect(config.diff.allow).toEqual([]);
+  });
+
+  it("writes a typed ripple.config.ts with --ts", { timeout: 90_000 }, () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ripple-init-ts-"));
+    const result = runCli(["init", "--ts"], dir);
+    expect(result.code).toBe(0);
+    expect(fs.existsSync(path.join(dir, "ripple.config.ts"))).toBe(true);
+    const content = fs.readFileSync(path.join(dir, "ripple.config.ts"), "utf8");
+    expect(content).toContain('import type { RippleConfig } from "@alimaandev/ripple"');
+    expect(content).toContain("export default config");
+    expect(content).toContain("**/*.{ts,tsx,js,jsx}");
+  });
+
+  it("writes the full defaults as TypeScript with --ts --full", { timeout: 90_000 }, () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ripple-init-ts-full-"));
+    const result = runCli(["init", "--ts", "--full"], dir);
+    expect(result.code).toBe(0);
+    const content = fs.readFileSync(path.join(dir, "ripple.config.ts"), "utf8");
+    expect(content).toContain("thresholds");
+    expect(content).toContain("allow: []");
+    expect(content).toContain("export default config");
+  });
 });
 
 function gitRepo(): string {

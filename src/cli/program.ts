@@ -168,13 +168,20 @@ export function createProgram(ctx: CommandContext): Command {
 
   program
     .command("init")
-    .description("Create a ripple.config.json with the default settings")
-    .addHelpText("after", helpExamples(["ripple init", "ripple init --force"]))
+    .description("Create a ripple.config with the default settings")
+    .addHelpText("after", helpExamples(["ripple init --force", "ripple init --ts --full"]))
     .option("-f, --force", "overwrite an existing config file")
+    .option("--full", "write every built-in default instead of a minimal config")
+    .option("--ts", "write a typed ripple.config.ts instead of JSON")
     .option("--no-color", "disable ANSI colors")
     .action(async (options: Record<string, unknown>) => {
       const exitCode = await initCommand(
-        { force: Boolean(options.force), color: options.color as boolean | undefined },
+        {
+          force: Boolean(options.force),
+          full: Boolean(options.full),
+          ts: Boolean(options.ts),
+          color: options.color as boolean | undefined,
+        },
         ctx,
       );
       if (exitCode !== ExitCode.Success) {

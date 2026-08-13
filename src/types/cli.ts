@@ -46,6 +46,10 @@ export interface DoctorOptions {
 /** Parsed command-line options for `ripple init`. */
 export interface InitOptions {
   force: boolean;
+  /** Write every built-in default instead of a minimal config. */
+  full?: boolean;
+  /** Write a typed `ripple.config.ts` instead of JSON. */
+  ts?: boolean;
   /** Whether to emit ANSI colors. `false` when `--no-color` is passed. */
   color?: boolean;
 }
