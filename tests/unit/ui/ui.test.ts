@@ -35,7 +35,7 @@ describe("brandHeader", () => {
     ).toBe("ripple — impact analysis · v1.2.3");
   });
 
-  it("renders a boxed banner with color", () => {
+  it("renders a flat brand line with color", () => {
     const previous = chalk.level;
     chalk.level = 1;
     try {
@@ -44,10 +44,10 @@ describe("brandHeader", () => {
         version: "1.2.3",
         style: { color: true },
       });
-      expect(output).toContain("╭");
-      expect(output).toContain("╰");
-      expect(output).toContain("ripple");
-      expect(output).toContain("dependency graph · v1.2.3");
+      // eslint-disable-next-line no-control-regex -- ANSI escape stripping in tests
+      const stripped = output.replace(/\u001b\[[0-9;]*m/g, "");
+      expect(stripped).toBe("ripple · dependency graph · v1.2.3");
+      expect(output).not.toContain("╭");
     } finally {
       chalk.level = previous;
     }
@@ -59,14 +59,14 @@ describe("sectionHeader", () => {
     expect(sectionHeader("Top impact", { color: false })).toBe("Top impact");
   });
 
-  it("prepends a hairline with color", () => {
+  it("prepends a caret with color", () => {
     const previous = chalk.level;
     chalk.level = 1;
     try {
       const output = sectionHeader("Top impact", { color: true });
       // eslint-disable-next-line no-control-regex -- ANSI escape stripping in tests
       const stripped = output.replace(/\u001b\[[0-9;]*m/g, "");
-      expect(stripped).toContain("────────\nTop impact");
+      expect(stripped).toBe("› Top impact");
     } finally {
       chalk.level = previous;
     }
