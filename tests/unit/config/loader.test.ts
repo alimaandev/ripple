@@ -35,7 +35,7 @@ describe("loadConfig", () => {
 
   it("loads diff settings from a json config", async () => {
     const result = await loadConfig(configsDir, "diff.json");
-    expect(result.config.diff).toEqual({ base: "origin/release", gate: "critical" });
+    expect(result.config.diff).toEqual({ base: "origin/release", gate: "critical", allow: [] });
   });
 
   it("throws for an explicit path that does not exist", async () => {

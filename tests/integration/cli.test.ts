@@ -450,3 +450,111 @@ describe("ripple diff", () => {
     expect(result.stderr).toContain("Git ref not found");
   });
 });
+
+describe("ripple diff allowlist", () => {
+  let hasGit = true;
+  try {
+    execFileSync("git", ["--version"], { stdio: "ignore" });
+  } catch {
+    hasGit = false;
+  }
+  const diffIt = hasGit ? it : it.skip;
+
+  function writeTree(dir: string): void {
+    fs.mkdirSync(path.join(dir, "src", "legacy"), { recursive: true });
+    fs.mkdirSync(path.join(dir, "src", "app"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "src", "legacy", "old.ts"), "export const old = 1;\n");
+    fs.writeFileSync(
+      path.join(dir, "src", "app", "app.ts"),
+      'import { old } from "../legacy/old";\nexport const app = old + 1;\n',
+    );
+    execFileSync("git", ["add", "."], { cwd: dir, stdio: "ignore" });
+    execFileSync("git", ["commit", "-m", "baseline"], { cwd: dir, stdio: "ignore" });
+  }
+
+  diffIt("lets --allow exempt changed files from blocking the gate", { timeout: 90_000 }, () => {
+    const dir = gitRepo();
+    writeTree(dir);
+    // A low `high` threshold guarantees the legacy change blocks the gate
+    // unless it is allowlisted.
+    fs.writeFileSync(
+      path.join(dir, "ripple.config.json"),
+      '{ "risk": { "thresholds": { "medium": 1, "high": 1, "critical": 100 } } }\n',
+    );
+    // Making the legacy file grow many dependents drives its risk score up.
+    fs.writeFileSync(
+      path.join(dir, "src", "legacy", "old.ts"),
+      "export const old = 1;\nexport const extra = 2;\nexport const more = 3;\n",
+    );
+
+    const blocked = runCli(["diff", "--json", "--base", "HEAD"], dir);
+    const blockedReport = JSON.parse(blocked.stdout) as {
+      gate: { blocked: boolean; counts: { high: number; critical: number } };
+    };
+    expect(blocked.code).toBe(1);
+    expect(blockedReport.gate.blocked).toBe(true);
+
+    const allowed = runCli(["diff", "--json", "--base", "HEAD", "--allow", "src/legacy/**"], dir);
+    const allowedReport = JSON.parse(allowed.stdout) as {
+      gate: { blocked: boolean; allowed: number };
+      files: Array<{ file: string; allowed?: boolean }>;
+    };
+    expect(allowed.code).toBe(0);
+    expect(allowedReport.gate.blocked).toBe(false);
+    expect(allowedReport.gate.allowed).toBeGreaterThanOrEqual(1);
+    expect(allowedReport.files.find((f) => f.file === "src/legacy/old.ts")?.allowed).toBe(true);
+  });
+
+  diffIt("reads diff.allow from ripple.config", { timeout: 90_000 }, () => {
+    const dir = gitRepo();
+    writeTree(dir);
+    fs.writeFileSync(
+      path.join(dir, "ripple.config.json"),
+      '{ "diff": { "base": "HEAD", "gate": "high", "allow": ["src/legacy/**"] } }\n',
+    );
+    fs.writeFileSync(
+      path.join(dir, "src", "legacy", "old.ts"),
+      "export const old = 1;\nexport const extra = 2;\n",
+    );
+
+    const result = runCli(["diff", "--json"], dir);
+    const report = JSON.parse(result.stdout) as {
+      gate: { blocked: boolean; allowed: number };
+    };
+    expect(result.code).toBe(0);
+    expect(report.gate.blocked).toBe(false);
+    expect(report.gate.allowed).toBeGreaterThanOrEqual(1);
+  });
+
+  diffIt("keeps allowlisted files out of github annotations", { timeout: 90_000 }, () => {
+    const dir = gitRepo();
+    writeTree(dir);
+    fs.writeFileSync(
+      path.join(dir, "src", "legacy", "old.ts"),
+      "export const old = 1;\nexport const extra = 2;\n",
+    );
+
+    const result = runCli(
+      ["diff", "--format", "github", "--base", "HEAD", "--allow", "src/legacy/**"],
+      dir,
+    );
+    expect(result.code).toBe(0);
+    expect(result.stdout).not.toContain("file=src/legacy/old.ts");
+    expect(result.stdout).toContain("Gate passed");
+  });
+
+  diffIt("marks allowlisted files in the terminal report", { timeout: 90_000 }, () => {
+    const dir = gitRepo();
+    writeTree(dir);
+    fs.writeFileSync(
+      path.join(dir, "src", "legacy", "old.ts"),
+      "export const old = 1;\nexport const extra = 2;\n",
+    );
+
+    const result = runCli(["diff", "--base", "HEAD", "--allow", "src/legacy/**"], dir);
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain("Allowed");
+    expect(result.stdout).toContain("(allowed)");
+    expect(result.stdout).toContain("Gate passed");
+  });
+});

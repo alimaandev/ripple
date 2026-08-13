@@ -28,5 +28,6 @@ export const DEFAULT_CONFIG: RippleConfig = {
   diff: {
     base: undefined,
     gate: "high",
+    allow: [],
   },
 };

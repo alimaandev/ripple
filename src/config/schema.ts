@@ -45,6 +45,7 @@ const diffConfigSchema = z
   .object({
     base: z.string().min(1).optional(),
     gate: z.enum(["medium", "high", "critical"]).default(DEFAULT_CONFIG.diff.gate),
+    allow: z.array(z.string()).default(DEFAULT_CONFIG.diff.allow),
   })
   .strict();
 
