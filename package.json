@@ -41,7 +41,8 @@
     "ripple": "dist/bin.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "ripple.schema.json"
   ],
   "engines": {
     "node": ">=22"
@@ -81,6 +82,7 @@
     "@types/picomatch": "^4.0.3",
     "@types/treeify": "^1.0.3",
     "@vitest/coverage-v8": "^4.1.10",
+    "ajv": "^8.20.0",
     "esbuild": "^0.28.1",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",

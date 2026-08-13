@@ -58,6 +58,12 @@ export interface DiffConfig {
  * The validated `ripple.config.ts` shape.
  */
 export interface RippleConfig {
+  /**
+   * JSON Schema reference used by editors for autocomplete and validation
+   * (e.g. `"./node_modules/@alimaandev/ripple/ripple.schema.json"`). Ignored
+   * by the CLI; written by `ripple init`.
+   */
+  $schema?: string;
   /** Glob patterns (relative to the project root) of source files to analyze. */
   include: string[];
   /** Glob patterns / directory names to exclude from analysis. */

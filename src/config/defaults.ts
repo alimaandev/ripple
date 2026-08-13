@@ -5,6 +5,7 @@ import type { RippleConfig } from "../types/config.js";
  * else keeps these values.
  */
 export const DEFAULT_CONFIG: RippleConfig = {
+  $schema: undefined,
   include: ["**/*.{ts,tsx,js,jsx}"],
   ignore: ["node_modules", "dist", "build", "coverage", ".next", "out", ".git"],
   aliases: {},

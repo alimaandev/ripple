@@ -51,6 +51,7 @@ const diffConfigSchema = z
 
 export const rippleConfigSchema: z.ZodType<RippleConfig> = z
   .object({
+    $schema: z.string().min(1).optional(),
     include: z.array(z.string().min(1)).min(1).default(DEFAULT_CONFIG.include),
     ignore: z.array(z.string()).default(DEFAULT_CONFIG.ignore),
     aliases: z.record(z.string(), z.string()).default(DEFAULT_CONFIG.aliases),

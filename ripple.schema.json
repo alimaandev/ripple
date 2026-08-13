@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/alimaandev/ripple/main/ripple.schema.json",
+  "title": "Ripple configuration",
+  "description": "Configuration for @alimaandev/ripple, dependency impact analysis for TypeScript and JavaScript.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1,
+      "description": "JSON Schema reference for editor autocomplete and validation. Written by `ripple init`."
+    },
+    "include": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "description": "Glob patterns (relative to the project root) of source files to analyze."
+    },
+    "ignore": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Glob patterns or directory names to exclude from analysis."
+    },
+    "aliases": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Path aliases, e.g. `{ \"@\": \"./src\" }`. Merged with tsconfig `paths`."
+    },
+    "tsconfigPath": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Path to tsconfig.json, relative to the project root. Default: tsconfig.json."
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Risk engine tuning.",
+      "properties": {
+        "weights": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Factor weights; defaults sum to 1.0.",
+          "properties": {
+            "affectedFiles": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Weight of the (log-scaled) number of affected files."
+            },
+            "entryPoint": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Weight of whether an entry point is affected."
+            },
+            "sharedUtility": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Weight of how many shared utilities are affected."
+            },
+            "publicExports": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Weight of the target file's public export surface."
+            },
+            "tests": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Weight of affected test files."
+            },
+            "routes": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Weight of affected API routes."
+            },
+            "cycleMembership": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Weight of the target being part of a circular dependency."
+            }
+          }
+        },
+        "thresholds": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Score thresholds that map a 0-100 risk score to a level.",
+          "properties": {
+            "medium": { "type": "number", "minimum": 0, "maximum": 100 },
+            "high": { "type": "number", "minimum": 0, "maximum": 100 },
+            "critical": { "type": "number", "minimum": 0, "maximum": 100 }
+          }
+        }
+      }
+    },
+    "diff": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Diff command tuning. CLI flags always take precedence.",
+      "properties": {
+        "base": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Git ref used as the change-set base when no `--base` is given."
+        },
+        "gate": {
+          "enum": ["medium", "high", "critical"],
+          "description": "Minimum risk level that fails the diff gate. Defaults to `\"high\"`."
+        },
+        "allow": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Glob patterns of changed files that are analyzed and reported but never block the gate."
+        }
+      }
+    }
+  }
+}
