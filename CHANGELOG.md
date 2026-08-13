@@ -4,16 +4,41 @@ All notable changes to Ripple are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0] - 2026-08-13
 
 ### Added
 
+- `ripple graph --format <terminal|json|mermaid|dot|html>` — export the
+  dependency graph as a Mermaid flowchart, a Graphviz digraph, or a
+  self-contained dark-themed HTML report with stats, cycle list, live
+  Mermaid source, and a full edge table. File-scoped exports render the
+  reachable subgraph (forward, or reverse with `-r`) — visualize a file's
+  blast radius. Export output is free of progress noise.
+- `ripple diff --allow <glob...>` and `diff.allow` in config — an allowlist
+  of changed files that are still analyzed and reported but never block the
+  gate. Terminal reports mark them `(allowed)`, JSON adds `files[].allowed`
+  and `gate.allowed`, and GitHub annotations skip them entirely. Adopt the
+  gate on legacy code without fixing every pre-existing risk on day one.
+- `ripple.schema.json` — a draft-07 JSON Schema for the whole config shape,
+  shipped in the npm package. `ripple init` writes a `$schema` reference so
+  editors autocomplete and validate `ripple.config.json`; the `$schema` key
+  is accepted (and ignored) by runtime config validation.
+- `ripple init` variants — `--full` writes every built-in default, `--ts`
+  writes a typed `ripple.config.ts` (full or minimal), and the default now
+  writes a minimal config (`$schema` + `include`) instead of a defaults dump.
 - One-line usage examples in `ripple <command> --help` for every command
   (closes #4 / #9).
 - CI enforces a global coverage floor for `src/**` on the unit suite
   (statements 65 / branches 50 / functions 68 / lines 65) (closes #6).
 - Integration test covering `graph --json` on an aliased project — aliased
   imports resolve through the graph and the stable contract holds (closes #5).
+
+### Changed
+
+- Terminal UI restyle (Part 1): the boxed header card and hairline dividers
+  are gone. Commands open with a flat `ripple · <label>` line and sections
+  use `› Title` headers — a quieter, terminal-first look. Colorless output
+  is unchanged. `boxen` is no longer a dependency.
 
 ### Security
 
