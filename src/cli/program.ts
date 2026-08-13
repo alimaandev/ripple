@@ -5,7 +5,7 @@ import { doctorCommand } from "../commands/doctor.js";
 import { initCommand } from "../commands/init.js";
 import { diffCommand } from "../commands/diff.js";
 import { RippleError } from "../utils/errors.js";
-import { ExitCode, type CommandContext, type DiffFormat } from "../types/cli.js";
+import { ExitCode, type CommandContext, type DiffFormat, type GraphFormat } from "../types/cli.js";
 
 /**
  * CLI program definition. `run()` returns the process exit code instead of
@@ -67,9 +67,18 @@ export function createProgram(ctx: CommandContext): Command {
     .description("Show project graph stats, or the dependency tree of one file")
     .addHelpText(
       "after",
-      helpExamples(["ripple graph", "ripple graph src/index.ts --reverse --depth 3"]),
+      helpExamples([
+        "ripple graph",
+        "ripple graph src/index.ts --reverse --depth 3",
+        "ripple graph --format mermaid",
+      ]),
     )
     .option("-j, --json", "emit a machine-readable JSON report")
+    .option(
+      "-f, --format <format>",
+      "output format: terminal | json | mermaid | dot | html",
+      parseGraphFormat,
+    )
     .option("-v, --verbose", "include extra sections")
     .option("-r, --reverse", "show dependents (what imports the file) instead of dependants")
     .option("-d, --depth <number>", "cap the tree depth", parsePositiveInt)
@@ -80,6 +89,7 @@ export function createProgram(ctx: CommandContext): Command {
         file,
         {
           json: Boolean(options.json),
+          format: (options.format as GraphFormat) ?? (options.json ? "json" : "terminal"),
           verbose: Boolean(options.verbose),
           reverse: Boolean(options.reverse),
           ...(options.depth !== undefined ? { depth: options.depth as number } : {}),
@@ -227,6 +237,24 @@ function parseDiffFormat(value: string): DiffFormat {
     1,
     "commander.invalidArgument",
     `expected one of terminal | json | github, got "${value}"`,
+  );
+}
+
+/** Validate the `graph --format` argument. */
+function parseGraphFormat(value: string): GraphFormat {
+  if (
+    value === "terminal" ||
+    value === "json" ||
+    value === "mermaid" ||
+    value === "dot" ||
+    value === "html"
+  ) {
+    return value;
+  }
+  throw new CommanderError(
+    1,
+    "commander.invalidArgument",
+    `expected one of terminal | json | mermaid | dot | html, got "${value}"`,
   );
 }
 
