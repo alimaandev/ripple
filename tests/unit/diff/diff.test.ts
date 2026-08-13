@@ -3,9 +3,11 @@ import {
   buildDiffJsonReport,
   countLevels,
   isAllowedByDiffAllowlist,
+  renderDiffReport,
   riskySummary,
 } from "../../../src/commands/diff.js";
 import type { AnalysisResult } from "../../../src/types/analysis.js";
+import type { OutputWriter } from "../../../src/types/cli.js";
 import type { RiskLevel } from "../../../src/types/risk.js";
 
 /** Minimal fake result carrying only the fields the helpers read. */
@@ -15,6 +17,47 @@ function resultFor(level: RiskLevel, score: number, path: string): AnalysisResul
     risk: { score, level, factors: [] },
     summary: { affectedFiles: 1 },
   } as unknown as AnalysisResult;
+}
+
+function memoryWriter(): OutputWriter & { text: string } {
+  let text = "";
+  const writer = {
+    get text() {
+      return text;
+    },
+    write: (chunk: string) => {
+      text += chunk;
+    },
+    writeLine: (line: string = "") => {
+      text += `${line}\n`;
+    },
+  };
+  return writer;
+}
+
+function renderInput(overrides: Partial<Parameters<typeof renderDiffReport>[0]> = {}) {
+  const entries = [
+    { rel: "src/a.ts", result: resultFor("LOW", 10, "src/a.ts"), allowed: false },
+    {
+      rel: "src/legacy/old.ts",
+      result: resultFor("CRITICAL", 95, "src/legacy/old.ts"),
+      allowed: true,
+    },
+  ];
+  return {
+    cwd: "/repo",
+    baseLabel: "origin/main",
+    files: ["src/a.ts", "src/legacy/old.ts"],
+    entries,
+    skipped: ["README.md"],
+    counts: { low: 1, medium: 0, high: 0, critical: 0 },
+    allowedCount: 1,
+    gate: "high" as const,
+    blocked: false,
+    durationMs: 12,
+    style: { color: false },
+    ...overrides,
+  };
 }
 
 describe("countLevels", () => {
@@ -130,5 +173,46 @@ describe("isAllowedByDiffAllowlist", () => {
 
   it("normalizes backslash paths for matching", () => {
     expect(isAllowedByDiffAllowlist("src\\legacy\\a.ts", ["src/legacy/**"])).toBe(true);
+  });
+});
+
+describe("renderDiffReport", () => {
+  it("renders the gate verdict and per-file rows", () => {
+    const writer = memoryWriter();
+    renderDiffReport(renderInput(), writer);
+    expect(writer.text).toContain("diff vs origin/main");
+    expect(writer.text).toContain("Gate passed");
+    expect(writer.text).toContain("Risk analysis (2 files)");
+    expect(writer.text).toContain("src/a.ts");
+  });
+
+  it("marks allowlisted files and shows the allowed count", () => {
+    const writer = memoryWriter();
+    renderDiffReport(renderInput(), writer);
+    expect(writer.text).toContain("Allowed");
+    expect(writer.text).toContain("src/legacy/old.ts  CRITICAL · 95.0/100 (allowed)");
+  });
+
+  it("shows a blocked verdict with gate-level counts", () => {
+    const writer = memoryWriter();
+    renderDiffReport(
+      renderInput({
+        blocked: true,
+        counts: { low: 0, medium: 0, high: 1, critical: 1 },
+        entries: [
+          { rel: "src/a.ts", result: resultFor("HIGH", 60, "src/a.ts"), allowed: false },
+          { rel: "src/b.ts", result: resultFor("CRITICAL", 95, "src/b.ts"), allowed: false },
+        ],
+      }),
+      writer,
+    );
+    expect(writer.text).toContain("Gate blocked");
+    expect(writer.text).toContain("1 CRITICAL · 1 HIGH");
+  });
+
+  it("lists files that were skipped as non-source", () => {
+    const writer = memoryWriter();
+    renderDiffReport(renderInput(), writer);
+    expect(writer.text).toContain("README.md (not a source file)");
   });
 });
