@@ -21,7 +21,7 @@ Change less. Break less. Know the blast radius of any file before you touch it.
 # or try it without installing anything:
 npx @alimaandev/ripple analyze src/your-file.ts</code></pre>
 
-  <img src="https://raw.githubusercontent.com/alimaandev/ripple/main/assets/hero.svg" alt="Terminal output of `ripple analyze` — risk, affected files, routes, components, tests, and confidence score" title="ripple analyze" width="100%" />
+  <img src="https://raw.githubusercontent.com/alimaandev/ripple/main/assets/hero-animated.svg" alt="Animated terminal demo of `ripple analyze` — command types in, then the report builds up: risk score with gauge, affected files, routes, components, tests, and confidence" title="ripple analyze" width="100%" />
 
 </div>
 
