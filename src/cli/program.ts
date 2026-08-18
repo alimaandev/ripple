@@ -41,6 +41,7 @@ export function createProgram(ctx: CommandContext): Command {
       ]),
     )
     .option("-j, --json", "emit a machine-readable JSON report")
+    .option("--sarif", "emit a SARIF 2.1.0 report for code scanning")
     .option("-v, --verbose", "include the risk factor breakdown")
     .option("-d, --depth <number>", "cap the reverse traversal depth", parsePositiveInt)
     .option("-c, --config <path>", "path to a ripple config file")
@@ -50,6 +51,7 @@ export function createProgram(ctx: CommandContext): Command {
         file,
         {
           json: Boolean(options.json),
+          sarif: Boolean(options.sarif),
           verbose: Boolean(options.verbose),
           ...(options.depth !== undefined ? { depth: options.depth as number } : {}),
           ...(options.config !== undefined ? { config: options.config as string } : {}),
@@ -111,7 +113,11 @@ export function createProgram(ctx: CommandContext): Command {
       helpExamples(["ripple diff --base main --gate critical", "ripple diff --format github"]),
     )
     .option("-j, --json", "emit a machine-readable JSON report")
-    .option("-f, --format <format>", "output format: terminal | json | github", parseDiffFormat)
+    .option(
+      "-f, --format <format>",
+      "output format: terminal | json | github | sarif",
+      parseDiffFormat,
+    )
     .option("-v, --verbose", "include extra sections")
     .option("-b, --base <ref>", "git ref to diff against (default: origin/main, main, HEAD~1)")
     .option(
@@ -239,13 +245,13 @@ function parseGateLevel(value: string): "medium" | "high" | "critical" {
 
 /** Validate the `--format` argument. */
 function parseDiffFormat(value: string): DiffFormat {
-  if (value === "terminal" || value === "json" || value === "github") {
+  if (value === "terminal" || value === "json" || value === "github" || value === "sarif") {
     return value;
   }
   throw new CommanderError(
     1,
     "commander.invalidArgument",
-    `expected one of terminal | json | github, got "${value}"`,
+    `expected one of terminal | json | github | sarif, got "${value}"`,
   );
 }
 

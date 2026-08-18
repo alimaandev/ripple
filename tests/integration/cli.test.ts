@@ -70,6 +70,30 @@ describe("ripple analyze", () => {
     expect(report.targetInCycle).toBe(false);
   });
 
+  it("emits a SARIF report for a fixture file", { timeout }, () => {
+    const result = runCli(["analyze", "src/authentication/login.ts", "--sarif"], basicFixture);
+    expect(result.code).toBe(0);
+    const doc = JSON.parse(result.stdout) as {
+      version: string;
+      runs: Array<{
+        tool: { driver: { name: string; version: string } };
+        results: Array<{
+          ruleId: string;
+          level: string;
+          locations: Array<{ physicalLocation: { artifactLocation: { uri: string } } }>;
+        }>;
+      }>;
+    };
+    expect(doc.version).toBe("2.1.0");
+    expect(doc.runs[0]!.tool.driver.name).toBe("ripple");
+    const entry = doc.runs[0]!.results[0]!;
+    expect(entry.ruleId).toBe("ripple/risk");
+    expect(entry.level).toBe("warning");
+    expect(entry.locations[0]!.physicalLocation.artifactLocation.uri).toBe(
+      "src/authentication/login.ts",
+    );
+  });
+
   it("renders a terminal report without --json", { timeout: 90_000 }, () => {
     const result = runCli(["analyze", "src/authentication/login.ts"], basicFixture);
     expect(result.code).toBe(0);
@@ -478,12 +502,43 @@ describe("ripple diff", () => {
     expect(result.stdout).toContain("Gate passed");
   });
 
+  diffIt("emits SARIF 2.1.0 for code scanning", { timeout: 90_000 }, () => {
+    const dir = gitRepo();
+    writeTree(dir);
+    fs.writeFileSync(
+      path.join(dir, "src", "b.ts"),
+      'import { a } from "./a";\nexport const b = a + 1;\nexport const g = a * 2;\n',
+    );
+
+    const result = runCli(["diff", "--format", "sarif", "--gate", "critical"], dir);
+    expect(result.code).toBe(0);
+    const doc = JSON.parse(result.stdout) as {
+      version: string;
+      runs: Array<{
+        tool: { driver: { name: string } };
+        results: Array<{
+          ruleId: string;
+          level: string;
+          locations: Array<{ physicalLocation: { artifactLocation: { uri: string } } }>;
+          partialFingerprints: Record<string, string>;
+        }>;
+      }>;
+    };
+    expect(doc.version).toBe("2.1.0");
+    expect(doc.runs[0]!.tool.driver.name).toBe("ripple");
+    const entry = doc.runs[0]!.results[0]!;
+    expect(entry.ruleId).toBe("ripple/risk");
+    expect(entry.level).toBe("note");
+    expect(entry.locations[0]!.physicalLocation.artifactLocation.uri).toBe("src/b.ts");
+    expect(entry.partialFingerprints.primaryLocationLineHash).toMatch(/^[0-9a-f]{64}$/);
+  });
+
   diffIt("rejects unknown --format values", { timeout: 90_000 }, () => {
     const dir = gitRepo();
     writeTree(dir);
     const result = runCli(["diff", "--format", "xml"], dir);
     expect(result.code).toBe(1);
-    expect(result.stderr).toContain("expected one of terminal | json | github");
+    expect(result.stderr).toContain("expected one of terminal | json | github | sarif");
   });
 
   diffIt("renders a terminal report", { timeout: 90_000 }, () => {

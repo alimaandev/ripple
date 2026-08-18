@@ -4,6 +4,7 @@ import { createStageTracker } from "../ui/progress.js";
 import { resolveColor } from "../ui/color.js";
 import { buildAnalyzeJsonReport, renderAnalyzeReport } from "../output/report.js";
 import { serializeJson } from "../formatter/json.js";
+import { buildAnalyzeSarif } from "../formatter/sarif.js";
 import { requireNode, resolveTargetFile, runPipeline } from "./pipeline.js";
 import { RippleError } from "../utils/errors.js";
 import { pathExists } from "../utils/fs.js";
@@ -51,6 +52,13 @@ export async function analyzeCommand(
   if (options.json) {
     const report = buildAnalyzeJsonReport(result, ctx.version, ctx.cwd);
     ctx.writer.write(serializeJson(report));
+    return ExitCode.Success;
+  }
+
+  if (options.sarif) {
+    ctx.writer.write(
+      serializeJson(buildAnalyzeSarif({ result, cwd: ctx.cwd, version: ctx.version })),
+    );
     return ExitCode.Success;
   }
 

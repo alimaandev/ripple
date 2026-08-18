@@ -18,6 +18,7 @@ import {
   type TextStyle,
 } from "../formatter/text.js";
 import { serializeJson } from "../formatter/json.js";
+import { buildDiffSarif } from "../formatter/sarif.js";
 import {
   buildFileAnnotations,
   buildGateAnnotation,
@@ -158,6 +159,23 @@ export async function diffCommand(options: DiffOptions, ctx: CommandContext): Pr
           durationMs,
           ctx.version,
         ),
+      ),
+    );
+    return blocked ? ExitCode.Failure : ExitCode.Success;
+  }
+
+  if (format === "sarif") {
+    ctx.writer.write(
+      serializeJson(
+        buildDiffSarif({
+          baseLabel: changed.baseLabel,
+          entries,
+          gate,
+          counts,
+          blocked,
+          durationMs,
+          version: ctx.version,
+        }),
       ),
     );
     return blocked ? ExitCode.Failure : ExitCode.Success;

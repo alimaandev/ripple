@@ -219,6 +219,7 @@ ripple <command> [options]
 | Command   | Flag                  | Description                                                                                    |
 | --------- | --------------------- | ---------------------------------------------------------------------------------------------- |
 | `analyze` | `-j, --json`          | Emit the JSON report instead of the terminal report                                            |
+| `analyze` | `--sarif`             | Emit a SARIF 2.1.0 report for code scanning                                                    |
 | `analyze` | `-v, --verbose`       | Include the risk-factor point breakdown                                                        |
 | `analyze` | `-d, --depth <n>`     | Cap the reverse traversal at `n` levels                                                        |
 | `analyze` | `-c, --config <path>` | Use a specific config file                                                                     |
@@ -235,7 +236,7 @@ ripple <command> [options]
 | `diff`    | `-j, --json`          | Emit the JSON report instead of the terminal report                                            |
 | `diff`    | `-b, --base <ref>`    | Git ref to diff against (default: `origin/main`, `main`, `HEAD~1`, or `diff.base` from config) |
 | `diff`    | `-g, --gate <level>`  | Blocking level: `medium`, `high`, or `critical` (default: `high`, or `diff.gate` from config)  |
-| `diff`    | `-f, --format <fmt>`  | Output: `terminal`, `json`, or `github` (workflow annotations)                                 |
+| `diff`    | `-f, --format <fmt>`  | Output: `terminal`, `json`, `github` (workflow annotations), or `sarif`                       |
 | `diff`    | `-d, --depth <n>`     | Cap reverse traversal per file                                                                 |
 | `diff`    | `-c, --config <path>` | Use a specific config file                                                                     |
 | `diff`    | `--no-color`          | Disable ANSI colors                                                                            |
@@ -332,6 +333,27 @@ verdict, so the job fails when the gate blocks:
 
 (`--json` is shorthand for `--format json`; the format flag also accepts
 `terminal`, the default.)
+
+`--format sarif` emits SARIF 2.1.0, the format GitHub Code Scanning speaks:
+
+```bash
+ripple diff --format sarif > ripple.sarif
+```
+
+Each analyzed change becomes a finding on the file — `error` when it is
+CRITICAL/HIGH, `warning` for MEDIUM, `note` for LOW — with a stable
+`primaryLocationLineHash` fingerprint so results deduplicate across runs.
+Allowlisted files are emitted as `note` with an in-source suppression, so
+they show as exempted rather than failing. Upload the report straight into
+Code Scanning alerts:
+
+```yaml
+- uses: actions/upload-sarif@v3
+  with:
+    sarif_file: ripple.sarif
+```
+
+The exit code still carries the gate verdict regardless of format.
 
 ## Configuration
 

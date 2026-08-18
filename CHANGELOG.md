@@ -16,6 +16,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Parsing is now fully error-tolerant: a broken file that trips an extractor
   records a `parseError` instead of aborting the run, matching the documented
   "lower confidence instead of failing" behavior.
+- `ripple diff --format sarif` and `ripple analyze --sarif` — SARIF 2.1.0
+  output for GitHub Code Scanning. Every changed file becomes a finding
+  (`error` for CRITICAL/HIGH, `warning` for MEDIUM, `note` for LOW) with a
+  stable `primaryLocationLineHash` fingerprint for cross-run deduplication;
+  allowlisted files are emitted as `note` with an in-source suppression. The
+  gate verdict still rides on the exit code.
 
 ## [0.6.0] - 2026-08-13
 
