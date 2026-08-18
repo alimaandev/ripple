@@ -1,7 +1,8 @@
 import path from "node:path";
 import { createTsProject } from "../parser/ts-project.js";
 import { discoverSourceFiles } from "../scanner/discover.js";
-import { buildGraph } from "../graph/build.js";
+import { buildGraphFromParsed } from "../graph/build.js";
+import { loadParsedFiles } from "../cache/parsed.js";
 import type { DependencyGraph } from "../types/graph.js";
 import type { ProjectContext } from "../types/project.js";
 import { detectEntryPoints } from "../analyzer/categorize.js";
@@ -10,12 +11,17 @@ import { fileNotFound } from "../utils/errors.js";
 
 /**
  * Shared pipeline for commands that need the full dependency graph
- * (analyze, graph, doctor). Loads context, discovers files, parses and
+ * (analyze, graph, diff, doctor). Loads context, discovers files, parses and
  * resolves everything into one graph, and detects entry points.
+ *
+ * Parsing is incremental: unchanged files are served from the on-disk cache
+ * (`.ripple/cache/`), so repeated runs only re-parse what actually changed.
+ * Resolution, cycles and stats are always recomputed from the parsed
+ * surfaces, keeping cached output byte-identical to cold runs.
  */
 
 export interface PipelineResult {
-  graph: ReturnType<typeof buildGraph>;
+  graph: ReturnType<typeof buildGraphFromParsed>;
   filePaths: string[];
   entryPoints: Set<string>;
   durationMs: number;
@@ -29,7 +35,13 @@ export async function runPipeline(context: ProjectContext): Promise<PipelineResu
     include: context.config.include,
     ignore: context.config.ignore,
   });
-  const graph = buildGraph(project, filePaths, {
+  const { parsedFiles } = await loadParsedFiles({
+    project,
+    rootDir: context.rootDir,
+    filePaths,
+    config: context.config,
+  });
+  const graph = buildGraphFromParsed(parsedFiles, {
     rootDir: context.rootDir,
     aliases: context.aliases,
     fileKeys: new Set(filePaths.map((p) => pathKey(p, context.rootDir))),

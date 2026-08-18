@@ -4,6 +4,19 @@ All notable changes to Ripple are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Incremental parse cache (`.ripple/cache/`). Repeated `analyze`, `graph`,
+  `diff` and `doctor` runs only re-parse the files whose content changed —
+  everything else is served from the cached surface, so the stable JSON
+  contract stays byte-identical while large-codebase runs get faster.
+  Disable with `RIPPLE_NO_CACHE=1`. The cache is never scanned by discovery.
+- Parsing is now fully error-tolerant: a broken file that trips an extractor
+  records a `parseError` instead of aborting the run, matching the documented
+  "lower confidence instead of failing" behavior.
+
 ## [0.6.0] - 2026-08-13
 
 ### Added

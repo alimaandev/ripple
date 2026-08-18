@@ -20,7 +20,7 @@ export async function discoverSourceFiles(options: DiscoveryOptions): Promise<st
   const ignoreGlobs = options.ignore
     .map(toIgnoreGlob)
     .filter((glob) => glob !== "")
-    .concat(["**/node_modules/**"]);
+    .concat(["**/node_modules/**", "**/.ripple/**"]);
 
   const files = await globFiles({
     cwd: options.rootDir,

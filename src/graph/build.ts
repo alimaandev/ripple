@@ -21,8 +21,19 @@ export function buildGraph(
   filePaths: string[],
   context: ResolverContext,
 ): DependencyGraph {
-  const parsedFiles = parseMany(project, filePaths);
+  return buildGraphFromParsed(parseMany(project, filePaths), context);
+}
 
+/**
+ * Build the graph from already-parsed surfaces (used by the incremental
+ * parse cache, which reuses cached surfaces for unchanged files). The result
+ * is identical to `buildGraph`: resolution, cycles and stats are always
+ * recomputed from the parsed imports.
+ */
+export function buildGraphFromParsed(
+  parsedFiles: ParsedFile[],
+  context: ResolverContext,
+): DependencyGraph {
   const nodes: DependencyGraph["nodes"] = new Map();
   const forward: DependencyGraph["forward"] = new Map();
   const reverse: DependencyGraph["reverse"] = new Map();
