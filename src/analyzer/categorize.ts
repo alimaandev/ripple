@@ -112,6 +112,7 @@ export function createCategorizer(options: CategorizerOptions): (filePath: strin
  * entry file names (in the project root or `src/`).
  */
 export async function detectEntryPoints(rootDir: string): Promise<Set<string>> {
+  const started = Date.now();
   const entryPoints = new Set<string>();
 
   const packageJsonPath = await findPackageJson(rootDir);
@@ -133,5 +134,8 @@ export async function detectEntryPoints(rootDir: string): Promise<Set<string>> {
     }
   }
 
+  if (process.env.RIPPLE_TRACE === "1") {
+    console.error(`[trace] detectEntryPoints: ${Date.now() - started}ms`);
+  }
   return entryPoints;
 }

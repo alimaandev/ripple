@@ -60,7 +60,7 @@ function fixturePaths(root: string): string[] {
 
 describe("cache location and hashing", () => {
   it("stores the cache under .ripple/cache in the project root", () => {
-    expect(CACHE_FILE).toBe(path.join(".ripple", "cache", "parsed-v1.json"));
+    expect(CACHE_FILE).toBe(path.join(".ripple", "cache", "parsed-v2.json"));
   });
 
   it("hashes file content deterministically", async () => {
@@ -101,6 +101,8 @@ describe("loadParsedCache / saveParsedCache", () => {
         "src/main.ts",
         {
           hash: "h1",
+          size: 123,
+          mtimeMs: 456,
           parsed: {
             path: "src/main.ts",
             kind: "ts" as const,
@@ -134,6 +136,8 @@ describe("loadParsedCache / saveParsedCache", () => {
           "src/main.ts",
           {
             hash: "h",
+            size: 10,
+            mtimeMs: 20,
             parsed: {
               path: "src/main.ts",
               kind: "ts" as const,
@@ -273,5 +277,33 @@ describe("loadParsedFiles", () => {
       if (previous === undefined) delete process.env.RIPPLE_NO_CACHE;
       else process.env.RIPPLE_NO_CACHE = previous;
     }
+  });
+
+  it("serves hits for files touched without content changes", async () => {
+    const root = fixtureRoot("ripple-cache-touch-");
+    const filePaths = fixturePaths(root);
+    const config = minimalConfig();
+    await loadParsedFiles({ project, rootDir: root, filePaths, config });
+
+    const touched = path.join(root, "src", "main.ts");
+    const now = new Date();
+    fs.utimesSync(touched, now, now);
+
+    const warm = await loadParsedFiles({ project, rootDir: root, filePaths, config });
+    expect(warm.stats.hits).toBe(filePaths.length);
+    expect(warm.stats.misses).toBe(0);
+  });
+
+  it("does not rewrite the cache when nothing changed", async () => {
+    const root = fixtureRoot("ripple-cache-clean-");
+    const filePaths = fixturePaths(root);
+    const config = minimalConfig();
+    await loadParsedFiles({ project, rootDir: root, filePaths, config });
+
+    const cachePath = path.join(root, CACHE_FILE);
+    const before = fs.statSync(cachePath).mtimeMs;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    await loadParsedFiles({ project, rootDir: root, filePaths, config });
+    expect(fs.statSync(cachePath).mtimeMs).toBe(before);
   });
 });

@@ -29,6 +29,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the merge gate). Point any MCP client at `ripple mcp` to risk-check
   refactors before they happen.
 
+### Changed
+
+- Cache freshness is checked with a cheap mtime+size match (file stats now
+  run in parallel) instead of re-hashing every file, and the cache is only
+  rewritten when something changed — repeated runs on an untouched tree get
+  ~1.2x–1.7x faster with growing repo size instead of rewriting state.
+  Benchmark methodology and numbers: `BENCHMARKS.md`.
+- `RIPPLE_TRACE=1` prints per-stage timings (pipeline, cache, graph) for
+  profiling single runs.
+
 ## [0.6.0] - 2026-08-13
 
 ### Added

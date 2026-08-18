@@ -11,20 +11,22 @@ import { toPosix } from "../utils/paths.js";
  * Incremental parse cache.
  *
  * Parsing a file with ts-morph (imports, exports, symbols) is the dominant
- * cost of an analysis run. For every discovered file we instead compute a
- * cheap content hash; when the hash matches the cached one, the previously
- * parsed surface is reused and ts-morph never touches the file.
+ * cost of an analysis run. For every discovered file we reuse the previously
+ * parsed surface when the file is provably unchanged. Freshness is checked
+ * with a cheap mtime+size match first â€” the steady-state hot path touches
+ * neither the file contents nor the hasher â€” and the cache is only rewritten
+ * to disk when something actually changed, so repeated runs are near-free.
  *
  * The cache is keyed by the discovery-affecting config (include/ignore), so
- * changing discovery invalidates it wholesale. The parsed surface is only
- * a function of file content — resolution, cycles and risk are recomputed
+ * changing discovery invalidates it wholesale. The parsed surface is only a
+ * function of file content â€” resolution, cycles and risk are recomputed
  * fresh on every run, so cached runs are byte-identical to cold runs.
  *
  * The cache lives in `<rootDir>/.ripple/cache/` and is written atomically.
  */
 
-export const CACHE_SCHEMA = 1;
-export const CACHE_FILE = path.join(".ripple", "cache", "parsed-v1.json");
+export const CACHE_SCHEMA = 2;
+export const CACHE_FILE = path.join(".ripple", "cache", "parsed-v2.json");
 
 /**
  * Set `RIPPLE_NO_CACHE=1` to force a cold run (e.g. for benchmarks). The
@@ -32,9 +34,14 @@ export const CACHE_FILE = path.join(".ripple", "cache", "parsed-v1.json");
  */
 export const cacheEnabled = (): boolean => process.env.RIPPLE_NO_CACHE !== "1";
 
-/** One cached file: its content hash plus the parsed surface. */
+/** One cached file: freshness metadata plus the parsed surface. */
 export interface ParsedCacheEntry {
+  /** Content hash; the source of truth when mtime+size don't match. */
   hash: string;
+  /** File size in bytes at cache time (fast freshness check). */
+  size: number;
+  /** File mtime in ms at cache time (fast freshness check). */
+  mtimeMs: number;
   parsed: ParsedFile;
 }
 
@@ -72,7 +79,7 @@ function cachePath(rootDir: string): string {
   return path.join(rootDir, CACHE_FILE);
 }
 
-/** Load the cache manifest; any problem (missing, corrupt, stale) → empty. */
+/** Load the cache manifest; any problem (missing, corrupt, stale) â†’ empty. */
 export async function loadParsedCache(
   rootDir: string,
   configHash: string,
@@ -131,6 +138,9 @@ export interface ParsedCacheStats {
  * Load parsed surfaces for every discovered file, parsing only the files
  * whose content changed since the last run. The result is ordered exactly
  * like `filePaths`, so downstream output is identical to a cold run.
+ *
+ * When nothing changed, the on-disk cache is not rewritten at all â€” the
+ * steady-state hot path is stat + JSON parse + graph rebuild.
  */
 export async function loadParsedFiles(options: {
   project: Project;
@@ -147,25 +157,61 @@ export async function loadParsedFiles(options: {
   }
   const configHash = configCacheHash(config);
   const cached = await loadParsedCache(rootDir, configHash);
+  const trace = process.env.RIPPLE_TRACE === "1";
+  const traceAt = (label: string, from: number): number => {
+    if (trace) console.error(`[trace] cache.${label}: ${Date.now() - from}ms`);
+    return Date.now();
+  };
+  let stage = Date.now();
 
+  const states = await Promise.all(
+    filePaths.map(async (abs) => {
+      try {
+        const stat = await fs.stat(abs);
+        return { abs, rel: relPosix(rootDir, abs), size: stat.size, mtimeMs: stat.mtimeMs };
+      } catch {
+        return { abs, rel: relPosix(rootDir, abs), size: -1, mtimeMs: -1 };
+      }
+    }),
+  );
+  stage = traceAt("load-cache", stage);
   const hits = new Map<string, ParsedCacheEntry>();
   const stale: string[] = [];
   const parsed = new Map<string, ParsedFile>();
+  /** Set when an entry needs persisting (miss, mtime refresh, or drift). */
+  let dirty = false;
 
-  for (const abs of filePaths) {
-    const rel = relPosix(rootDir, abs);
-    let hash: string;
-    try {
-      hash = await contentHash(abs);
-    } catch {
-      hash = "";
+  for (const state of states) {
+    const entry = cached.get(state.rel);
+    if (
+      entry !== undefined &&
+      entry.size === state.size &&
+      entry.mtimeMs === state.mtimeMs &&
+      state.mtimeMs > 0
+    ) {
+      hits.set(state.rel, entry);
+      parsed.set(state.rel, { ...entry.parsed, path: state.abs });
+      continue;
     }
-    const entry = cached.get(rel);
+
+    let hash = "";
+    try {
+      hash = await contentHash(state.abs);
+    } catch {
+      /* unreadable file: hash stays "" and the entry is re-parsed */
+    }
+
     if (entry !== undefined && entry.hash === hash) {
-      hits.set(rel, entry);
-      parsed.set(rel, { ...entry.parsed, path: abs });
+      if (entry.mtimeMs !== state.mtimeMs || entry.size !== state.size) {
+        hits.set(state.rel, { ...entry, size: state.size, mtimeMs: state.mtimeMs });
+        dirty = true;
+      } else {
+        hits.set(state.rel, entry);
+      }
+      parsed.set(state.rel, { ...entry.parsed, path: state.abs });
     } else {
-      stale.push(abs);
+      stale.push(state.abs);
+      dirty = true;
     }
   }
 
@@ -176,13 +222,30 @@ export async function loadParsedFiles(options: {
     for (const parsedFile of parseMany(project, stale)) {
       parsed.set(relPosix(rootDir, parsedFile.path), parsedFile);
     }
+  }
+  traceAt("freshness+parse", stage);
+
+  if (dirty) {
     const next = new Map<string, ParsedCacheEntry>(hits);
     for (const parsedFile of parsed.values()) {
       const rel = relPosix(rootDir, parsedFile.path);
-      const hash = hits.get(rel)?.hash ?? (await contentHash(parsedFile.path).catch(() => ""));
-      next.set(rel, { hash, parsed: { ...parsedFile, path: rel } });
+      if (next.has(rel)) continue;
+      const state = states.find((candidate) => candidate.rel === rel);
+      let hash = "";
+      try {
+        hash = await contentHash(parsedFile.path);
+      } catch {
+        /* unreadable file: hash stays "" */
+      }
+      next.set(rel, {
+        hash,
+        size: state?.size ?? -1,
+        mtimeMs: state?.mtimeMs ?? -1,
+        parsed: { ...parsedFile, path: rel },
+      });
     }
     await saveParsedCache(rootDir, configHash, next);
+    traceAt("save", stage);
   }
 
   const parsedFiles = filePaths.map((abs) => {

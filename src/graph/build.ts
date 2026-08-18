@@ -34,6 +34,11 @@ export function buildGraphFromParsed(
   parsedFiles: ParsedFile[],
   context: ResolverContext,
 ): DependencyGraph {
+  const started = Date.now();
+  const trace = process.env.RIPPLE_TRACE === "1";
+  const mark = (label: string): void => {
+    if (trace) console.error(`[trace] graph.${label}: ${Date.now() - started}ms`);
+  };
   const nodes: DependencyGraph["nodes"] = new Map();
   const forward: DependencyGraph["forward"] = new Map();
   const reverse: DependencyGraph["reverse"] = new Map();
@@ -49,6 +54,7 @@ export function buildGraphFromParsed(
     nodes.set(key, { path: parsed.path, parsed });
     if (!parsed.parseError) parsedCount++;
   }
+  mark("nodes");
 
   for (const parsed of parsedFiles) {
     const fromKey = pathKey(parsed.path, context.rootDir);
@@ -99,8 +105,10 @@ export function buildGraphFromParsed(
       cycles: 0,
     },
   };
+  mark("edges");
   graph.cycles = findCycles(graph);
   graph.stats.cycles = graph.cycles.length;
+  mark("cycles");
   return graph;
 }
 

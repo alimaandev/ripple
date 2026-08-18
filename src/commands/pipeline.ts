@@ -29,24 +29,34 @@ export interface PipelineResult {
 
 export async function runPipeline(context: ProjectContext): Promise<PipelineResult> {
   const started = Date.now();
+  const trace = process.env.RIPPLE_TRACE === "1";
+  const mark = (label: string): void => {
+    if (trace) console.error(`[trace] pipeline.${label}: ${Date.now() - started}ms`);
+  };
   const project = createTsProject();
+  mark("ts-project");
   const filePaths = await discoverSourceFiles({
     rootDir: context.rootDir,
     include: context.config.include,
     ignore: context.config.ignore,
   });
-  const { parsedFiles } = await loadParsedFiles({
+  mark("discover");
+  const { parsedFiles, stats } = await loadParsedFiles({
     project,
     rootDir: context.rootDir,
     filePaths,
     config: context.config,
   });
+  if (trace) console.error(`[trace] cache: ${stats.hits} hits, ${stats.misses} misses`);
+  mark("parsed");
   const graph = buildGraphFromParsed(parsedFiles, {
     rootDir: context.rootDir,
     aliases: context.aliases,
     fileKeys: new Set(filePaths.map((p) => pathKey(p, context.rootDir))),
   });
+  mark("graph");
   const entryPoints = await detectEntryPoints(context.rootDir);
+  mark("entry-points");
   return { graph, filePaths, entryPoints, durationMs: Date.now() - started };
 }
 

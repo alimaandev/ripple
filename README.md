@@ -236,7 +236,7 @@ ripple <command> [options]
 | `diff`    | `-j, --json`          | Emit the JSON report instead of the terminal report                                            |
 | `diff`    | `-b, --base <ref>`    | Git ref to diff against (default: `origin/main`, `main`, `HEAD~1`, or `diff.base` from config) |
 | `diff`    | `-g, --gate <level>`  | Blocking level: `medium`, `high`, or `critical` (default: `high`, or `diff.gate` from config)  |
-| `diff`    | `-f, --format <fmt>`  | Output: `terminal`, `json`, `github` (workflow annotations), or `sarif`                       |
+| `diff`    | `-f, --format <fmt>`  | Output: `terminal`, `json`, `github` (workflow annotations), or `sarif`                        |
 | `diff`    | `-d, --depth <n>`     | Cap reverse traversal per file                                                                 |
 | `diff`    | `-c, --config <path>` | Use a specific config file                                                                     |
 | `diff`    | `--no-color`          | Disable ANSI colors                                                                            |
@@ -376,12 +376,12 @@ the agent can check a file's blast radius before touching it:
 
 Four tools are served:
 
-| Tool           | Inputs                    | Returns                                                                 |
-| -------------- | ------------------------- | ----------------------------------------------------------------------- |
-| `impact`       | `file`, `maxDepth?`       | Blast radius: affected files, routes, tests, components, risk level     |
-| `dependents`   | `file`, `depth?`          | Who imports the file, up to a depth (default 1, direct)                 |
-| `risk`         | `file`                    | Risk score with the factor breakdown behind it                          |
-| `gate_status`  | `base?`, `gate?`          | Current change set vs the merge gate: files, levels, pass/block verdict |
+| Tool          | Inputs              | Returns                                                                 |
+| ------------- | ------------------- | ----------------------------------------------------------------------- |
+| `impact`      | `file`, `maxDepth?` | Blast radius: affected files, routes, tests, components, risk level     |
+| `dependents`  | `file`, `depth?`    | Who imports the file, up to a depth (default 1, direct)                 |
+| `risk`        | `file`              | Risk score with the factor breakdown behind it                          |
+| `gate_status` | `base?`, `gate?`    | Current change set vs the merge gate: files, levels, pass/block verdict |
 
 A typical agent loop: `impact src/auth/session.ts` before refactoring,
 `dependents` to see who breaks, then `gate_status` after editing to confirm
