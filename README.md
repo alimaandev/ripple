@@ -100,7 +100,7 @@ Everything below is real output against a shipped example project in `tests/fixt
 ```bash
 npm install -g @alimaandev/ripple
 
-ripple version                  # → 0.6.0
+ripple version                  # → 0.7.0
 ```
 
 Or install from source:
@@ -132,7 +132,7 @@ ripple analyze src/authentication/login.ts
 Expected output:
 
 ```text
-ripple · impact analysis · v0.6.0
+ripple · impact analysis · v0.7.0
 
 File        src/authentication/login.ts
 Risk        MEDIUM · 34.7/100 ███░░░░░░░
@@ -165,7 +165,7 @@ ripple graph
 ```
 
 ```text
-ripple · dependency graph · v0.6.0
+ripple · dependency graph · v0.7.0
 
 Files            25
 Edges            28

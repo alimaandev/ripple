@@ -1,6 +1,6 @@
 {
   "name": "@alimaandev/ripple",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Dependency impact analysis for TypeScript and JavaScript. Know the blast radius of any change — before you commit.",
   "keywords": [
     "cli",

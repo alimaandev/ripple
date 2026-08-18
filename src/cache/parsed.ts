@@ -13,13 +13,13 @@ import { toPosix } from "../utils/paths.js";
  * Parsing a file with ts-morph (imports, exports, symbols) is the dominant
  * cost of an analysis run. For every discovered file we reuse the previously
  * parsed surface when the file is provably unchanged. Freshness is checked
- * with a cheap mtime+size match first â€” the steady-state hot path touches
- * neither the file contents nor the hasher â€” and the cache is only rewritten
+ * with a cheap mtime+size match first — the steady-state hot path touches
+ * neither the file contents nor the hasher — and the cache is only rewritten
  * to disk when something actually changed, so repeated runs are near-free.
  *
  * The cache is keyed by the discovery-affecting config (include/ignore), so
  * changing discovery invalidates it wholesale. The parsed surface is only a
- * function of file content â€” resolution, cycles and risk are recomputed
+ * function of file content — resolution, cycles and risk are recomputed
  * fresh on every run, so cached runs are byte-identical to cold runs.
  *
  * The cache lives in `<rootDir>/.ripple/cache/` and is written atomically.
@@ -79,7 +79,7 @@ function cachePath(rootDir: string): string {
   return path.join(rootDir, CACHE_FILE);
 }
 
-/** Load the cache manifest; any problem (missing, corrupt, stale) â†’ empty. */
+/** Load the cache manifest; any problem (missing, corrupt, stale) → empty. */
 export async function loadParsedCache(
   rootDir: string,
   configHash: string,
@@ -139,7 +139,7 @@ export interface ParsedCacheStats {
  * whose content changed since the last run. The result is ordered exactly
  * like `filePaths`, so downstream output is identical to a cold run.
  *
- * When nothing changed, the on-disk cache is not rewritten at all â€” the
+ * When nothing changed, the on-disk cache is not rewritten at all — the
  * steady-state hot path is stat + JSON parse + graph rebuild.
  */
 export async function loadParsedFiles(options: {
