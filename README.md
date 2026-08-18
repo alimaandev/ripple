@@ -388,6 +388,8 @@ A typical agent loop: `impact src/auth/session.ts` before refactoring,
 the gate still passes. Tool results are JSON text; failures return
 `isError` results instead of crashing the session.
 
+  <img src="https://raw.githubusercontent.com/alimaandev/ripple/main/assets/mcp-demo.svg" alt="Flow diagram — an AI agent calls impact on src/auth/session.ts through ripple mcp and gets the blast radius back: 7 affected files, 4 routes, MEDIUM risk" title="ripple mcp flow" width="100%" />
+
 ## Configuration
 
 Ripple discovers `ripple.config.ts`, `.js`, `.cjs`, `.mjs`, or `.json` in the
