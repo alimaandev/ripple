@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="580" viewBox="0 0 760 580" role="img" aria-labelledby="title desc">
+  <title id="title">ripple analyze src/authentication/login.ts — animated demo</title>
+  <desc id="desc">Animated terminal demo of Ripple impact analysis: the command types in, then the report builds up — MEDIUM risk 34.7/100, 4 routes, 2 components, 1 test, 7 affected files, 100% confidence.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#0a0e14"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="24" flood-color="#000000" flood-opacity="0.55"/>
+    </filter>
+    <clipPath id="typeclip">
+      <rect x="48" y="58" width="0" height="20">
+        <animate attributeName="width" values="0;345;345" keyTimes="0;0.105;1" dur="22s" repeatCount="indefinite" calcMode="spline" keySplines="0.3 0.1 0.3 1;0.3 0.1 0.3 1"/>
+      </rect>
+    </clipPath>
+  </defs>
+
+  <rect x="0" y="0" width="760" height="580" rx="14" fill="url(#bg)" filter="url(#glow)"/>
+  <rect x="0" y="0" width="760" height="36" rx="14" fill="#161b22" stroke="#21262d"/>
+  <rect x="0" y="22" width="760" height="14" fill="#161b22"/>
+
+  <circle cx="24" cy="18" r="6" fill="#ff5f57"/>
+  <circle cx="44" cy="18" r="6" fill="#febc2e"/>
+  <circle cx="64" cy="18" r="6" fill="#28c840"/>
+
+  <text x="380" y="24" text-anchor="middle" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">ripple analyze src/authentication/login.ts</text>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;1" keyTimes="0;0.02;1" dur="22s" repeatCount="indefinite"/>
+    <text x="32" y="76" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">$</text>
+    <text clip-path="url(#typeclip)" x="48" y="76" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#79c0ff">ripple analyze src/authentication/login.ts</text>
+    <rect x="396" y="62" width="8" height="16" fill="#79c0ff">
+      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.06;0.1;1" dur="22s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.127;0.16;1" dur="22s" repeatCount="indefinite"/>
+    <text x="32" y="104" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" font-weight="700" fill="#79c0ff">ripple · impact analysis</text>
+    <text x="225" y="104" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">· v0.7.0</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.16;0.185;1" dur="22s" repeatCount="indefinite"/>
+    <text x="32" y="176" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#79c0ff">File</text>
+    <text x="150" y="176" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">src/authentication/login.ts</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.19;0.22;1" dur="22s" repeatCount="indefinite"/>
+    <text x="32" y="198" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#79c0ff">Risk</text>
+    <text x="150" y="198" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#d29922">MEDIUM</text>
+    <text x="220" y="198" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">· 34.7/100</text>
+    <rect x="315" y="190" width="0" height="8" rx="4" fill="#d29922">
+      <animate attributeName="width" values="0;0;110;110" keyTimes="0;0.2;0.24;1" dur="22s" repeatCount="indefinite" calcMode="spline" keySplines="0.3 0.1 0.3 1;0.3 0.1 0.3 1;0.3 0.1 0.3 1"/>
+    </rect>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.23;0.26;1" dur="22s" repeatCount="indefinite"/>
+    <text x="32" y="220" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#79c0ff">Impact</text>
+    <text x="150" y="220" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">4 routes</text>
+    <text x="228" y="220" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">·</text>
+    <text x="243" y="220" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">2 components</text>
+    <text x="365" y="220" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">·</text>
+    <text x="380" y="220" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">1 test</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.27;0.3;1" dur="22s" repeatCount="indefinite"/>
+    <text x="32" y="242" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#79c0ff">Affected</text>
+    <text x="150" y="242" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">7 files</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.31;0.34;1" dur="22s" repeatCount="indefinite"/>
+    <text x="32" y="264" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#79c0ff">Max depth</text>
+    <text x="150" y="264" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">2</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.35;0.38;1" dur="22s" repeatCount="indefinite"/>
+    <text x="32" y="286" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#79c0ff">Confidence</text>
+    <text x="150" y="286" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#3fb950">100%</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.39;0.42;1" dur="22s" repeatCount="indefinite"/>
+    <text x="32" y="326" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" font-weight="700" fill="#e6edf3">› Top impact</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.425;0.45;1" dur="22s" repeatCount="indefinite"/>
+    <text x="48" y="348" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">●</text>
+    <text x="62" y="348" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">Dashboard</text>
+    <text x="155" y="348" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">(2)</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.455;0.48;1" dur="22s" repeatCount="indefinite"/>
+    <text x="48" y="370" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">●</text>
+    <text x="62" y="370" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">Admin</text>
+    <text x="125" y="370" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">(1)</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.485;0.51;1" dur="22s" repeatCount="indefinite"/>
+    <text x="48" y="392" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">●</text>
+    <text x="62" y="392" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">Index TS</text>
+    <text x="145" y="392" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">(1)</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.515;0.54;1" dur="22s" repeatCount="indefinite"/>
+    <text x="32" y="432" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" font-weight="700" fill="#e6edf3">› Circular dependencies</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.545;0.57;1" dur="22s" repeatCount="indefinite"/>
+    <text x="32" y="454" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">◯</text>
+    <text x="48" y="454" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">src/circular/a.ts</text>
+    <text x="173" y="454" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">→</text>
+    <text x="185" y="454" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">src/circular/c.ts</text>
+    <text x="310" y="454" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">→</text>
+    <text x="322" y="454" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">src/circular/b.ts</text>
+    <text x="447" y="454" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">→</text>
+    <text x="459" y="454" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">src/circular/a.ts</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.575;0.6;1" dur="22s" repeatCount="indefinite"/>
+    <text x="32" y="494" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" font-weight="700" fill="#e6edf3">› Affected files (7)</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.605;0.64;1" dur="22s" repeatCount="indefinite"/>
+    <text x="48" y="516" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">├─ src/dashboard/page.tsx</text>
+    <text x="220" y="516" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">· depth 1</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.645;0.68;1" dur="22s" repeatCount="indefinite"/>
+    <text x="48" y="538" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#e6edf3">└─ src/main.ts</text>
+    <text x="178" y="538" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">· depth 2</text>
+  </g>
+</svg>
