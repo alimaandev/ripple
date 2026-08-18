@@ -22,6 +22,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   stable `primaryLocationLineHash` fingerprint for cross-run deduplication;
   allowlisted files are emitted as `note` with an in-source suppression. The
   gate verdict still rides on the exit code.
+- `ripple mcp` — a Model Context Protocol server over stdio that exposes
+  Ripple's analysis as tools for AI coding agents: `impact` (blast radius of
+  a file), `dependents` (who imports a file, up to a depth), `risk` (score
+  with factor breakdown) and `gate_status` (does the current change set pass
+  the merge gate). Point any MCP client at `ripple mcp` to risk-check
+  refactors before they happen.
 
 ## [0.6.0] - 2026-08-13
 

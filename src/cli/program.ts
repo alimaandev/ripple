@@ -4,6 +4,7 @@ import { graphCommand } from "../commands/graph.js";
 import { doctorCommand } from "../commands/doctor.js";
 import { initCommand } from "../commands/init.js";
 import { diffCommand } from "../commands/diff.js";
+import { mcpCommand } from "../commands/mcp.js";
 import { RippleError } from "../utils/errors.js";
 import { ExitCode, type CommandContext, type DiffFormat, type GraphFormat } from "../types/cli.js";
 
@@ -187,6 +188,26 @@ export function createProgram(ctx: CommandContext): Command {
           full: Boolean(options.full),
           ts: Boolean(options.ts),
           color: options.color as boolean | undefined,
+        },
+        ctx,
+      );
+      if (exitCode !== ExitCode.Success) {
+        throw new ExitError(exitCode);
+      }
+    });
+
+  program
+    .command("mcp")
+    .description("Serve Ripple analysis tools over the Model Context Protocol (stdio)")
+    .addHelpText(
+      "after",
+      helpExamples(['ripple mcp  # point an MCP client (Claude, Cursor, ...) at "ripple mcp"']),
+    )
+    .option("-c, --config <path>", "path to a ripple config file")
+    .action(async (options: Record<string, unknown>) => {
+      const exitCode = await mcpCommand(
+        {
+          config: options.config as string | undefined,
         },
         ctx,
       );

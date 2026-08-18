@@ -241,6 +241,11 @@ ripple <command> [options]
 | `diff`    | `-c, --config <path>` | Use a specific config file                                                                     |
 | `diff`    | `--no-color`          | Disable ANSI colors                                                                            |
 
+### `ripple mcp`
+
+Serve Ripple's analysis tools over the Model Context Protocol (see
+[the MCP section](#ripple-mcp-1) below).
+
 ### `ripple doctor`
 
 Independent health checks — config validity, tsconfig presence, source
@@ -354,6 +359,34 @@ Code Scanning alerts:
 ```
 
 The exit code still carries the gate verdict regardless of format.
+
+### `ripple mcp`
+
+`ripple mcp` exposes Ripple's analysis to AI coding agents as a Model
+Context Protocol server over stdio. Point any MCP client at the command and
+the agent can check a file's blast radius before touching it:
+
+```json
+{
+  "mcpServers": {
+    "ripple": { "command": "npx", "args": ["@alimaandev/ripple", "mcp"] }
+  }
+}
+```
+
+Four tools are served:
+
+| Tool           | Inputs                    | Returns                                                                 |
+| -------------- | ------------------------- | ----------------------------------------------------------------------- |
+| `impact`       | `file`, `maxDepth?`       | Blast radius: affected files, routes, tests, components, risk level     |
+| `dependents`   | `file`, `depth?`          | Who imports the file, up to a depth (default 1, direct)                 |
+| `risk`         | `file`                    | Risk score with the factor breakdown behind it                          |
+| `gate_status`  | `base?`, `gate?`          | Current change set vs the merge gate: files, levels, pass/block verdict |
+
+A typical agent loop: `impact src/auth/session.ts` before refactoring,
+`dependents` to see who breaks, then `gate_status` after editing to confirm
+the gate still passes. Tool results are JSON text; failures return
+`isError` results instead of crashing the session.
 
 ## Configuration
 
