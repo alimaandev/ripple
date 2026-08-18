@@ -4,6 +4,41 @@ All notable changes to Ripple are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Incremental parse cache (`.ripple/cache/`). Repeated `analyze`, `graph`,
+  `diff` and `doctor` runs only re-parse the files whose content changed —
+  everything else is served from the cached surface, so the stable JSON
+  contract stays byte-identical while large-codebase runs get faster.
+  Disable with `RIPPLE_NO_CACHE=1`. The cache is never scanned by discovery.
+- Parsing is now fully error-tolerant: a broken file that trips an extractor
+  records a `parseError` instead of aborting the run, matching the documented
+  "lower confidence instead of failing" behavior.
+- `ripple diff --format sarif` and `ripple analyze --sarif` — SARIF 2.1.0
+  output for GitHub Code Scanning. Every changed file becomes a finding
+  (`error` for CRITICAL/HIGH, `warning` for MEDIUM, `note` for LOW) with a
+  stable `primaryLocationLineHash` fingerprint for cross-run deduplication;
+  allowlisted files are emitted as `note` with an in-source suppression. The
+  gate verdict still rides on the exit code.
+- `ripple mcp` — a Model Context Protocol server over stdio that exposes
+  Ripple's analysis as tools for AI coding agents: `impact` (blast radius of
+  a file), `dependents` (who imports a file, up to a depth), `risk` (score
+  with factor breakdown) and `gate_status` (does the current change set pass
+  the merge gate). Point any MCP client at `ripple mcp` to risk-check
+  refactors before they happen.
+
+### Changed
+
+- Cache freshness is checked with a cheap mtime+size match (file stats now
+  run in parallel) instead of re-hashing every file, and the cache is only
+  rewritten when something changed — repeated runs on an untouched tree get
+  ~1.2x–1.7x faster with growing repo size instead of rewriting state.
+  Benchmark methodology and numbers: `BENCHMARKS.md`.
+- `RIPPLE_TRACE=1` prints per-stage timings (pipeline, cache, graph) for
+  profiling single runs.
+
 ## [0.6.0] - 2026-08-13
 
 ### Added

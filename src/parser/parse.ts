@@ -25,13 +25,24 @@ export function parseSourceFile(project: Project, filePath: string): ParsedFile 
     };
   }
 
-  return {
-    path: filePath,
-    kind: sourceFileKind(filePath) ?? "ts",
-    imports: extractImports(sourceFile),
-    exports: extractExports(sourceFile),
-    symbols: extractSymbols(sourceFile),
-  };
+  try {
+    return {
+      path: filePath,
+      kind: sourceFileKind(filePath) ?? "ts",
+      imports: extractImports(sourceFile),
+      exports: extractExports(sourceFile),
+      symbols: extractSymbols(sourceFile),
+    };
+  } catch (error) {
+    return {
+      path: filePath,
+      kind: sourceFileKind(filePath) ?? "ts",
+      imports: [],
+      exports: { named: [], hasDefault: false, reExportedFrom: [], reExportedAll: [] },
+      symbols: { functions: [], classes: [], interfaces: [], enums: [], typeAliases: [] },
+      parseError: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 /** Parse many files, reusing the shared project. Never throws. */

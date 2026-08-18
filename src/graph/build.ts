@@ -21,8 +21,24 @@ export function buildGraph(
   filePaths: string[],
   context: ResolverContext,
 ): DependencyGraph {
-  const parsedFiles = parseMany(project, filePaths);
+  return buildGraphFromParsed(parseMany(project, filePaths), context);
+}
 
+/**
+ * Build the graph from already-parsed surfaces (used by the incremental
+ * parse cache, which reuses cached surfaces for unchanged files). The result
+ * is identical to `buildGraph`: resolution, cycles and stats are always
+ * recomputed from the parsed imports.
+ */
+export function buildGraphFromParsed(
+  parsedFiles: ParsedFile[],
+  context: ResolverContext,
+): DependencyGraph {
+  const started = Date.now();
+  const trace = process.env.RIPPLE_TRACE === "1";
+  const mark = (label: string): void => {
+    if (trace) console.error(`[trace] graph.${label}: ${Date.now() - started}ms`);
+  };
   const nodes: DependencyGraph["nodes"] = new Map();
   const forward: DependencyGraph["forward"] = new Map();
   const reverse: DependencyGraph["reverse"] = new Map();
@@ -38,6 +54,7 @@ export function buildGraph(
     nodes.set(key, { path: parsed.path, parsed });
     if (!parsed.parseError) parsedCount++;
   }
+  mark("nodes");
 
   for (const parsed of parsedFiles) {
     const fromKey = pathKey(parsed.path, context.rootDir);
@@ -88,8 +105,10 @@ export function buildGraph(
       cycles: 0,
     },
   };
+  mark("edges");
   graph.cycles = findCycles(graph);
   graph.stats.cycles = graph.cycles.length;
+  mark("cycles");
   return graph;
 }
 

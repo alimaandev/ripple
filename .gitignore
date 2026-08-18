@@ -5,3 +5,7 @@ coverage/
 .DS_Store
 *.tsbuildinfo
 *.docx
+
+.ripple/
+.bench/
+*.cpuprofile

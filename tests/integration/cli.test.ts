@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -68,6 +68,30 @@ describe("ripple analyze", () => {
     expect(report.summary.affectedFiles).toBe(7);
     expect(report.summary.maxDepth).toBe(2);
     expect(report.targetInCycle).toBe(false);
+  });
+
+  it("emits a SARIF report for a fixture file", { timeout }, () => {
+    const result = runCli(["analyze", "src/authentication/login.ts", "--sarif"], basicFixture);
+    expect(result.code).toBe(0);
+    const doc = JSON.parse(result.stdout) as {
+      version: string;
+      runs: Array<{
+        tool: { driver: { name: string; version: string } };
+        results: Array<{
+          ruleId: string;
+          level: string;
+          locations: Array<{ physicalLocation: { artifactLocation: { uri: string } } }>;
+        }>;
+      }>;
+    };
+    expect(doc.version).toBe("2.1.0");
+    expect(doc.runs[0]!.tool.driver.name).toBe("ripple");
+    const entry = doc.runs[0]!.results[0]!;
+    expect(entry.ruleId).toBe("ripple/risk");
+    expect(entry.level).toBe("warning");
+    expect(entry.locations[0]!.physicalLocation.artifactLocation.uri).toBe(
+      "src/authentication/login.ts",
+    );
   });
 
   it("renders a terminal report without --json", { timeout: 90_000 }, () => {
@@ -478,12 +502,43 @@ describe("ripple diff", () => {
     expect(result.stdout).toContain("Gate passed");
   });
 
+  diffIt("emits SARIF 2.1.0 for code scanning", { timeout: 90_000 }, () => {
+    const dir = gitRepo();
+    writeTree(dir);
+    fs.writeFileSync(
+      path.join(dir, "src", "b.ts"),
+      'import { a } from "./a";\nexport const b = a + 1;\nexport const g = a * 2;\n',
+    );
+
+    const result = runCli(["diff", "--format", "sarif", "--gate", "critical"], dir);
+    expect(result.code).toBe(0);
+    const doc = JSON.parse(result.stdout) as {
+      version: string;
+      runs: Array<{
+        tool: { driver: { name: string } };
+        results: Array<{
+          ruleId: string;
+          level: string;
+          locations: Array<{ physicalLocation: { artifactLocation: { uri: string } } }>;
+          partialFingerprints: Record<string, string>;
+        }>;
+      }>;
+    };
+    expect(doc.version).toBe("2.1.0");
+    expect(doc.runs[0]!.tool.driver.name).toBe("ripple");
+    const entry = doc.runs[0]!.results[0]!;
+    expect(entry.ruleId).toBe("ripple/risk");
+    expect(entry.level).toBe("note");
+    expect(entry.locations[0]!.physicalLocation.artifactLocation.uri).toBe("src/b.ts");
+    expect(entry.partialFingerprints.primaryLocationLineHash).toMatch(/^[0-9a-f]{64}$/);
+  });
+
   diffIt("rejects unknown --format values", { timeout: 90_000 }, () => {
     const dir = gitRepo();
     writeTree(dir);
     const result = runCli(["diff", "--format", "xml"], dir);
     expect(result.code).toBe(1);
-    expect(result.stderr).toContain("expected one of terminal | json | github");
+    expect(result.stderr).toContain("expected one of terminal | json | github | sarif");
   });
 
   diffIt("renders a terminal report", { timeout: 90_000 }, () => {
@@ -609,5 +664,102 @@ describe("ripple diff allowlist", () => {
     expect(result.stdout).toContain("Allowed");
     expect(result.stdout).toContain("(allowed)");
     expect(result.stdout).toContain("Gate passed");
+  });
+});
+
+describe("ripple mcp", () => {
+  const timeout = 90_000;
+
+  it("serves the ripple tools over stdio and analyzes a file", { timeout }, async () => {
+    const child = spawn(process.execPath, [jitiCli, bin, "mcp"], {
+      cwd: basicFixture,
+      env: { ...process.env, JITI_DEBUG: "0", NO_COLOR: "1" },
+    });
+    let stdout = "";
+    const stderr: string[] = [];
+    child.stdout.on("data", (chunk: Buffer) => (stdout += chunk.toString("utf8")));
+    child.stderr.on("data", (chunk: Buffer) => stderr.push(chunk.toString("utf8")));
+    const closed = new Promise<number | null>((resolve) => {
+      child.on("close", (code) => resolve(code));
+    });
+
+    child.stdin.write(
+      `${JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "it" } },
+      })}\n`,
+    );
+    child.stdin.write(
+      `${JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" })}\n`,
+    );
+    child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/list" })}\n`);
+    child.stdin.write(
+      `${JSON.stringify({
+        jsonrpc: "2.0",
+        id: 3,
+        method: "tools/call",
+        params: { name: "impact", arguments: { file: "src/authentication/login.ts" } },
+      })}\n`,
+    );
+    child.stdin.end();
+
+    const code = await closed;
+    expect(code).toBe(0);
+    const responses = stdout
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line) as Record<string, unknown>);
+    expect(responses).toHaveLength(3);
+    const initialize = responses[0]!.result as {
+      serverInfo: { name: string };
+      protocolVersion: string;
+    };
+    expect(initialize.serverInfo.name).toBe("ripple");
+    expect(initialize.protocolVersion).toBe("2025-06-18");
+    const tools = (responses[1]!.result as { tools: Array<{ name: string }> }).tools.map(
+      (tool) => tool.name,
+    );
+    expect(tools).toEqual(["impact", "dependents", "risk", "gate_status"]);
+    const impact = responses[2]!.result as {
+      content: Array<{ text: string }>;
+      isError?: boolean;
+    };
+    expect(impact.isError).toBeUndefined();
+    const payload = JSON.parse(impact.content[0]!.text) as {
+      file: string;
+      risk: { score: number; level: string };
+      summary: { affectedFiles: number };
+    };
+    expect(payload.file).toBe("src/authentication/login.ts");
+    expect(payload.risk.level).toBe("MEDIUM");
+    expect(payload.summary.affectedFiles).toBe(7);
+    expect(stderr.join("")).toBe("");
+  });
+
+  it("turns a failed tool call into an isError result and keeps serving", { timeout }, async () => {
+    const child = spawn(process.execPath, [jitiCli, bin, "mcp"], {
+      cwd: basicFixture,
+      env: { ...process.env, JITI_DEBUG: "0", NO_COLOR: "1" },
+    });
+    let stdout = "";
+    child.stdout.on("data", (chunk: Buffer) => (stdout += chunk.toString("utf8")));
+    const closed = new Promise<number | null>((resolve) => {
+      child.on("close", (code) => resolve(code));
+    });
+
+    child.stdin.write(
+      `${JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "risk", arguments: { file: "src/does-not-exist.ts" } } })}\n`,
+    );
+    child.stdin.end();
+
+    const code = await closed;
+    expect(code).toBe(0);
+    const response = JSON.parse(stdout.trim()) as {
+      result: { isError: boolean; content: Array<{ text: string }> };
+    };
+    expect(response.result.isError).toBe(true);
+    expect(response.result.content[0]!.text).toContain("not found in the project graph");
   });
 });

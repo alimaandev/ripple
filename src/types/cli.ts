@@ -6,6 +6,7 @@
 /** Parsed command-line options for `ripple analyze`. */
 export interface AnalyzeOptions {
   json: boolean;
+  sarif: boolean;
   verbose: boolean;
   /** Whether to emit ANSI colors. `false` when `--no-color` is passed. */
   color?: boolean;
@@ -55,7 +56,7 @@ export interface InitOptions {
 }
 
 /** Supported output formats for `ripple diff`. */
-export type DiffFormat = "terminal" | "json" | "github";
+export type DiffFormat = "terminal" | "json" | "github" | "sarif";
 
 /** Parsed command-line options for `ripple diff`. */
 export interface DiffOptions {
