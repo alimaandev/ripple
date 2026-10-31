@@ -7,6 +7,8 @@
  *   import type { RippleConfig } from "@alimaandev/ripple";
  */
 
+export const ripplePackageName = "@alimaandev/ripple";
+
 export type { DiffConfig, RippleConfig, AliasMap } from "./types/config.js";
 export type { ProjectContext, TsconfigInfo } from "./types/project.js";
 export type { RiskLevel, RiskFactor, RiskResult } from "./types/risk.js";
