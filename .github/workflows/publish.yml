@@ -10,6 +10,9 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # npm provenance
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -23,6 +26,55 @@ jobs:
       - run: pnpm run lint
       - run: pnpm run test
       - run: pnpm run build
-      - run: npm publish --access public
+
+      - name: Verify tag matches package version
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$version" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match package.json version ${version}"
+            exit 1
+          fi
+          echo "Publishing ${version} from ${GITHUB_REF_NAME}"
+
+      - name: Pack and smoke-test the tarball
+        id: pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          tarball="$(npm pack --silent)"
+          echo "tarball=${tarball}" >> "$GITHUB_OUTPUT"
+
+          # The published package must contain the CLI entry point and schema.
+          tar -tzf "$tarball" | grep -qx "package/dist/bin.js"
+          tar -tzf "$tarball" | grep -qx "package/ripple.schema.json"
+
+          tmp="$(mktemp -d)"
+          cd "$tmp"
+          npm init -y > /dev/null
+          npm install "${GITHUB_WORKSPACE}/${tarball}" --no-audit --no-fund > /dev/null
+          installed="$(./node_modules/.bin/ripple --version)"
+          expected="$(node -p "require('${GITHUB_WORKSPACE}/package.json').version")"
+          if [ "$installed" != "$expected" ]; then
+            echo "::error::Packed CLI reported ${installed}, expected ${expected}"
+            exit 1
+          fi
+
+      - name: Publish to npm
+        shell: bash
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          if [[ "$version" == *-* ]]; then
+            dist_tag="next"
+          else
+            dist_tag="latest"
+          fi
+          npm publish "${{ steps.pack.outputs.tarball }}" \
+            --access public \
+            --provenance \
+            --tag "$dist_tag"

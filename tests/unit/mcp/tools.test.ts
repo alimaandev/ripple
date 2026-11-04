@@ -129,6 +129,7 @@ describe("ripple mcp tools", () => {
     const snap2 = await snapshot();
     const mcpTools = tools(snap2, () => ({
       baseLabel: "origin/main",
+      repoRoot: aliasesFixture,
       files: ["src/index.ts"],
     }));
     const result = await call(byName(mcpTools, "gate_status"), { gate: "critical" });
@@ -150,6 +151,7 @@ describe("ripple mcp tools", () => {
     const snap2 = await snapshot();
     const mcpTools = tools(snap2, () => ({
       baseLabel: "HEAD",
+      repoRoot: aliasesFixture,
       files: ["src/index.ts"],
     }));
     const result = await call(byName(mcpTools, "gate_status"), {});
@@ -157,6 +159,31 @@ describe("ripple mcp tools", () => {
       gate: { level: string; verdict: string };
     };
     expect(payload.gate.level).toBe("high");
+  });
+
+  it("uses diff.base and diff.allow from the project config", async () => {
+    const snap2 = await snapshot();
+    snap2.context.config.diff.base = "develop";
+    snap2.context.config.diff.allow = ["src/index.ts"];
+    let seenBase: string | undefined;
+    const mcpTools = tools(snap2, (base) => {
+      seenBase = base;
+      return {
+        baseLabel: base ?? "HEAD",
+        repoRoot: aliasesFixture,
+        files: ["src/index.ts"],
+      };
+    });
+    const result = await call(byName(mcpTools, "gate_status"), {});
+    const payload = JSON.parse(result.text) as {
+      files: Array<{ file: string; analyzed: boolean; allowed?: boolean }>;
+      counts: Record<string, number>;
+      gate: { blocked: boolean; verdict: string; allowed: number };
+    };
+    expect(seenBase).toBe("develop");
+    expect(payload.files[0]).toMatchObject({ file: "src/index.ts", allowed: true });
+    expect(payload.gate.allowed).toBe(1);
+    expect(payload.counts.low).toBe(0);
   });
 
   it("gate_status fails cleanly outside a git repository", async () => {

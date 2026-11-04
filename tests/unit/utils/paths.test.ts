@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import {
   displayPath,
   firstSegment,
   isBareSpecifier,
   isRelativeSpecifier,
   jsToTsCandidate,
+  jsToTsCandidates,
   pathKey,
+  realPath,
   sourceFileKind,
   toPosix,
 } from "../../../src/utils/paths.js";
@@ -31,6 +36,24 @@ describe.skipIf(!isWin)("pathKey", () => {
   });
 });
 
+describe("realPath", () => {
+  it("returns the canonical path for an existing file", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ripple-realpath-"));
+    try {
+      const file = path.join(dir, "a.ts");
+      fs.writeFileSync(file, "export const a = 1;\n");
+      expect(realPath(file, dir)).toBe(fs.realpathSync.native(file));
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("falls back to an absolute path when the target does not exist", () => {
+    const missing = path.join(os.tmpdir(), `ripple-missing-${process.pid}.ts`);
+    expect(realPath(missing, os.tmpdir())).toBe(path.resolve(missing));
+  });
+});
+
 describe("specifier classification", () => {
   it("detects relative imports", () => {
     expect(isRelativeSpecifier("./x")).toBe(true);
@@ -53,6 +76,10 @@ describe("sourceFileKind", () => {
     expect(sourceFileKind("a.TSX")).toBe("tsx");
     expect(sourceFileKind("a.js")).toBe("js");
     expect(sourceFileKind("a.jsx")).toBe("jsx");
+    expect(sourceFileKind("a.mts")).toBe("mts");
+    expect(sourceFileKind("a.cts")).toBe("cts");
+    expect(sourceFileKind("a.mjs")).toBe("mjs");
+    expect(sourceFileKind("a.cjs")).toBe("cjs");
   });
 
   it("rejects other extensions", () => {
@@ -68,6 +95,11 @@ describe("jsToTsCandidate", () => {
     expect(jsToTsCandidate("src/x.mjs")).toBe("src/x.mts");
     expect(jsToTsCandidate("src/x.cjs")).toBe("src/x.cts");
     expect(jsToTsCandidate("src/x.ts")).toBe("src/x.ts");
+  });
+
+  it("offers tsx as a second candidate for js specifiers", () => {
+    expect(jsToTsCandidates("src/x.js")).toEqual(["src/x.ts", "src/x.tsx"]);
+    expect(jsToTsCandidates("src/x.ts")).toEqual([]);
   });
 });
 

@@ -325,7 +325,7 @@ describe("ripple init", () => {
       diff?: unknown;
     };
     expect(config.$schema).toContain("ripple.schema.json");
-    expect(config.include).toContain("**/*.{ts,tsx,js,jsx}");
+    expect(config.include).toContain("**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}");
     expect(config.risk).toBeUndefined();
     expect(config.diff).toBeUndefined();
   });
@@ -354,7 +354,7 @@ describe("ripple init", () => {
     const content = fs.readFileSync(path.join(dir, "ripple.config.ts"), "utf8");
     expect(content).toContain('import type { RippleConfig } from "@alimaandev/ripple"');
     expect(content).toContain("export default config");
-    expect(content).toContain("**/*.{ts,tsx,js,jsx}");
+    expect(content).toContain("**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}");
   });
 
   it("writes the full defaults as TypeScript with --ts --full", { timeout: 90_000 }, () => {
@@ -428,6 +428,67 @@ describe("ripple diff", () => {
     expect(report.files[0]!.file).toBe("src/b.ts");
     expect(report.files[0]!.analyzed).toBe(true);
     expect(result.code).toBe(report.gate.blocked ? 1 : 0);
+  });
+
+  diffIt("analyzes changes when run from a package subdirectory", { timeout: 90_000 }, () => {
+    const dir = gitRepo();
+    const packageDir = path.join(dir, "packages", "app");
+    fs.mkdirSync(path.join(packageDir, "src"), { recursive: true });
+    fs.writeFileSync(path.join(packageDir, "src", "a.ts"), "export const a = 1;\n");
+    fs.writeFileSync(
+      path.join(packageDir, "src", "b.ts"),
+      'import { a } from "./a";\nexport const b = a + 1;\n',
+    );
+    execFileSync("git", ["add", "."], { cwd: dir, stdio: "ignore" });
+    execFileSync("git", ["commit", "-m", "baseline"], { cwd: dir, stdio: "ignore" });
+
+    fs.writeFileSync(
+      path.join(packageDir, "src", "b.ts"),
+      'import { a } from "./a";\nexport const b = a + 2;\n',
+    );
+    fs.writeFileSync(path.join(packageDir, "src", "new.ts"), "export const n = 1;\n");
+
+    const result = runCli(["diff", "--json", "--base", "main"], packageDir);
+    expect(result.code).toBe(0);
+    const report = JSON.parse(result.stdout) as {
+      changedFiles: number;
+      files: Array<{ file: string; analyzed: boolean }>;
+    };
+    expect(report.changedFiles).toBe(2);
+    expect(report.files).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ file: "src/b.ts", analyzed: true }),
+        expect.objectContaining({ file: "src/new.ts", analyzed: true }),
+      ]),
+    );
+
+    // A second run must see the same change set even though the first run
+    // wrote its parse cache inside the package.
+    const second = runCli(["diff", "--json", "--base", "main"], packageDir);
+    const secondReport = JSON.parse(second.stdout) as { changedFiles: number };
+    expect(secondReport.changedFiles).toBe(2);
+
+    // GitHub surfaces must use repository-relative paths, not project-relative.
+    const sarif = runCli(["diff", "--format", "sarif", "--base", "main"], packageDir);
+    expect(sarif.code).toBe(0);
+    const sarifDoc = JSON.parse(sarif.stdout) as {
+      runs: Array<{
+        results: Array<{
+          locations: Array<{ physicalLocation: { artifactLocation: { uri: string } } }>;
+        }>;
+      }>;
+    };
+    const uris = sarifDoc.runs[0]!.results.map(
+      (entry) => entry.locations[0]!.physicalLocation.artifactLocation.uri,
+    );
+    expect(uris).toEqual(
+      expect.arrayContaining(["packages/app/src/b.ts", "packages/app/src/new.ts"]),
+    );
+
+    const annotations = runCli(["diff", "--format", "github", "--base", "main"], packageDir);
+    expect(annotations.code).toBe(0);
+    expect(annotations.stdout).toContain("file=packages/app/src/b.ts");
+    expect(annotations.stdout).not.toContain("file=src/b.ts");
   });
 
   diffIt("passes with --gate critical when nothing is critical", { timeout: 90_000 }, () => {
@@ -555,7 +616,7 @@ describe("ripple diff", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ripple-nogit-"));
     const result = runCli(["diff", "--base", "main"], dir);
     expect(result.code).toBe(2);
-    expect(result.stderr).toContain("Git ref not found");
+    expect(result.stderr.toLowerCase()).toContain("not a git repository");
   });
 });
 
@@ -736,6 +797,73 @@ describe("ripple mcp", () => {
     expect(payload.risk.level).toBe("MEDIUM");
     expect(payload.summary.affectedFiles).toBe(7);
     expect(stderr.join("")).toBe("");
+  });
+
+  it("reflects files created after the server starts", { timeout }, async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ripple-mcp-refresh-"));
+    fs.mkdirSync(path.join(dir, "src"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "src", "a.ts"), "export const a = 1;\n");
+
+    const child = spawn(process.execPath, [jitiCli, bin, "mcp"], {
+      cwd: dir,
+      env: { ...process.env, JITI_DEBUG: "0", NO_COLOR: "1" },
+    });
+    let buffer = "";
+    const pending: string[] = [];
+    const waiters: Array<(line: string) => void> = [];
+    child.stdout.on("data", (chunk: Buffer) => {
+      buffer += chunk.toString("utf8");
+      let newline = buffer.indexOf("\n");
+      while (newline >= 0) {
+        const line = buffer.slice(0, newline);
+        buffer = buffer.slice(newline + 1);
+        const waiter = waiters.shift();
+        if (waiter) waiter(line);
+        else pending.push(line);
+        newline = buffer.indexOf("\n");
+      }
+    });
+    const nextResponse = (): Promise<string> => {
+      const line = pending.shift();
+      if (line) return Promise.resolve(line);
+      return new Promise((resolve) => waiters.push(resolve));
+    };
+    const callImpact = (id: number, file: string): void => {
+      child.stdin.write(
+        `${JSON.stringify({
+          jsonrpc: "2.0",
+          id,
+          method: "tools/call",
+          params: { name: "impact", arguments: { file } },
+        })}\n`,
+      );
+    };
+    const closed = new Promise<number | null>((resolve) => {
+      child.on("close", (code) => resolve(code));
+    });
+
+    callImpact(1, "src/new.ts");
+    const first = JSON.parse(await nextResponse()) as {
+      result: { isError?: boolean };
+    };
+    expect(first.result.isError).toBe(true);
+
+    // The agent edits the project between calls: the server must see it.
+    fs.writeFileSync(
+      path.join(dir, "src", "new.ts"),
+      'import { a } from "./a";\nexport const n = a + 1;\n',
+    );
+    callImpact(2, "src/new.ts");
+    const second = JSON.parse(await nextResponse()) as {
+      result: { isError?: boolean; content: Array<{ text: string }> };
+    };
+    expect(second.result.isError).toBeUndefined();
+    const payload = JSON.parse(second.result.content[0]!.text) as { file: string };
+    expect(payload.file).toBe("src/new.ts");
+
+    child.stdin.end();
+    expect(await closed).toBe(0);
+    fs.rmSync(dir, { recursive: true, force: true });
   });
 
   it("turns a failed tool call into an isError result and keeps serving", { timeout }, async () => {

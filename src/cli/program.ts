@@ -120,7 +120,10 @@ export function createProgram(ctx: CommandContext): Command {
       parseDiffFormat,
     )
     .option("-v, --verbose", "include extra sections")
-    .option("-b, --base <ref>", "git ref to diff against (default: origin/main, main, HEAD~1)")
+    .option(
+      "-b, --base <ref>",
+      "git ref to diff against (default: GitHub base, origin/HEAD, origin/main, origin/master, main, master)",
+    )
     .option(
       "-g, --gate <level>",
       "risk level that blocks the gate (medium | high | critical)",

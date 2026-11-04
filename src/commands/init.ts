@@ -17,7 +17,7 @@ import type { CommandContext, InitOptions } from "../types/cli.js";
  * `ripple.config.ts`. Refuses to overwrite an existing file unless `--force`.
  */
 
-const SCHEMA_REF = "./node_modules/@alimaandev/ripple/ripple.schema.json";
+const SCHEMA_REF = "https://raw.githubusercontent.com/alimaandev/ripple/main/ripple.schema.json";
 
 function jsonPayload(full: boolean): Record<string, unknown> {
   const payload = full ? { ...DEFAULT_CONFIG } : { include: DEFAULT_CONFIG.include };

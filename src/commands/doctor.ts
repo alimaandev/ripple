@@ -42,7 +42,13 @@ export async function doctorCommand(
   };
 
   try {
-    check("Node.js runtime", "ok", process.version);
+    check(
+      "Node.js runtime",
+      "ok",
+      options.verbose
+        ? `${process.version} · ${process.platform}/${process.arch}`
+        : process.version,
+    );
 
     const packageJson = await findPackageJson(ctx.cwd);
     if (packageJson) {
@@ -114,6 +120,14 @@ export async function doctorCommand(
       check("circular dependencies", "ok", "none found");
     } else {
       check("circular dependencies", "warn", `${stats.cycles} cycle group(s)`);
+    }
+
+    if (options.verbose) {
+      check(
+        "graph",
+        "ok",
+        `${stats.files} files · ${stats.internalEdges} internal edges · ${stats.externalEdges} external · ${stats.unresolvedEdges} unresolved`,
+      );
     }
   } finally {
     spinner.stop();

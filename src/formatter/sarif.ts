@@ -48,10 +48,8 @@ export function riskToSarifLevel(level: RiskLevel): SarifLevel {
 }
 
 /** Stable per-file fingerprint so GitHub deduplicates findings across runs. */
-export function primaryLocationHash(ruleId: string, uri: string, score: number): string {
-  return createHash("sha256")
-    .update(`${ruleId}|${uri}|${score.toFixed(1)}`)
-    .digest("hex");
+export function primaryLocationHash(ruleId: string, uri: string): string {
+  return createHash("sha256").update(`${ruleId}|${uri}`).digest("hex");
 }
 
 /** The single rule Ripple reports against. */
@@ -69,7 +67,10 @@ const RISK_RULE = {
 };
 
 interface DiffSarifEntry {
+  /** Project-relative path, used for display and diagnostics. */
   rel: string;
+  /** Repository-relative path for Code Scanning artifact URIs. */
+  repoRel?: string;
   result: AnalysisResult;
   allowed: boolean;
 }
@@ -77,6 +78,7 @@ interface DiffSarifEntry {
 /** File-level SARIF result for one analyzed file. */
 function fileResult(entry: DiffSarifEntry, gate: GateLevel): Record<string, unknown> {
   const { rel, result, allowed } = entry;
+  const uri = entry.repoRel ?? rel;
   const level = allowed ? "note" : riskToSarifLevel(result.risk.level);
   const blocked = LEVEL_INDEX[result.risk.level] >= GATE_INDEX[gate];
   const score = result.risk.score.toFixed(1);
@@ -92,13 +94,13 @@ function fileResult(entry: DiffSarifEntry, gate: GateLevel): Record<string, unkn
     locations: [
       {
         physicalLocation: {
-          artifactLocation: { uri: rel },
+          artifactLocation: { uri },
           region: { startLine: 1 },
         },
       },
     ],
     partialFingerprints: {
-      primaryLocationLineHash: primaryLocationHash("ripple/risk", rel, result.risk.score),
+      primaryLocationLineHash: primaryLocationHash("ripple/risk", uri),
     },
     properties: {
       ripple: {
@@ -213,7 +215,7 @@ export function buildAnalyzeSarif(options: {
               },
             ],
             partialFingerprints: {
-              primaryLocationLineHash: primaryLocationHash("ripple/risk", uri, result.risk.score),
+              primaryLocationLineHash: primaryLocationHash("ripple/risk", uri),
             },
             properties: {
               ripple: {

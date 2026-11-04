@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { basicFixture } from "../../helpers/fixtures.js";
@@ -56,6 +58,21 @@ describe("parseSourceFile", () => {
     expect(parsed.kind).toBe("js");
     expect(parsed.exports.named).toEqual(["legacyFormat", "legacyName"]);
     expect(parsed.parseError).toBeUndefined();
+  });
+
+  it("records syntactic diagnostics as a parse error", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ripple-parse-broken-"));
+    try {
+      const file = path.join(dir, "broken.ts");
+      fs.writeFileSync(file, "export const value = ;\n", "utf8");
+      const parsed = parseSourceFile(project, file);
+      expect(parsed.parseError).toBeDefined();
+      expect(parsed.parseError).toMatch(/line 1/i);
+      expect(parsed.imports).toEqual([]);
+      expect(parsed.exports.named).toEqual([]);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it("records a parse error without throwing for unreadable files", () => {

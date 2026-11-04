@@ -11,7 +11,7 @@ describe("discoverSourceFiles", () => {
   it("discovers all source files in the fixture", async () => {
     const files = await discoverSourceFiles({
       rootDir,
-      include: ["**/*.{ts,tsx,js,jsx}"],
+      include: ["**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}"],
       ignore: ["node_modules", "dist"],
     });
     expect(files.length).toBeGreaterThan(10);
@@ -23,7 +23,7 @@ describe("discoverSourceFiles", () => {
   it("excludes ignored directories", async () => {
     const files = await discoverSourceFiles({
       rootDir,
-      include: ["**/*.{ts,tsx,js,jsx}"],
+      include: ["**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}"],
       ignore: ["src/tests"],
     });
     const ignored = files.some((f) => toPosix(path.relative(rootDir, f)).includes("src/tests/"));
@@ -64,6 +64,6 @@ describe("isSourceFile", () => {
 
 describe("SOURCE_EXTENSION_GLOB", () => {
   it("covers ts, tsx, js, jsx", () => {
-    expect(SOURCE_EXTENSION_GLOB).toBe("*.{ts,tsx,js,jsx}");
+    expect(SOURCE_EXTENSION_GLOB).toBe("*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}");
   });
 });

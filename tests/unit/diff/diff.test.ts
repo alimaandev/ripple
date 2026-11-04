@@ -215,4 +215,20 @@ describe("renderDiffReport", () => {
     renderDiffReport(renderInput(), writer);
     expect(writer.text).toContain("README.md (not a source file)");
   });
+
+  it("prints per-file impact detail in verbose mode", () => {
+    const writer = memoryWriter();
+    const detailed = {
+      ...resultFor("HIGH", 70, "src/a.ts"),
+      summary: { affectedFiles: 3, maxDepth: 2, confidence: 88 },
+    } as unknown as AnalysisResult;
+    renderDiffReport(
+      renderInput({
+        verbose: true,
+        entries: [{ rel: "src/a.ts", result: detailed, allowed: false }],
+      }),
+      writer,
+    );
+    expect(writer.text).toContain("3 files affected · max depth 2 · confidence 88%");
+  });
 });

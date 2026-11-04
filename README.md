@@ -100,7 +100,7 @@ Everything below is real output against a shipped example project in `tests/fixt
 ```bash
 npm install -g @alimaandev/ripple
 
-ripple version                  # → 0.7.0
+ripple version                  # → 0.7.1
 ```
 
 Or install from source:
@@ -132,7 +132,7 @@ ripple analyze src/authentication/login.ts
 Expected output:
 
 ```text
-ripple · impact analysis · v0.7.0
+ripple · impact analysis · v0.7.1
 
 File        src/authentication/login.ts
 Risk        MEDIUM · 34.7/100 ███░░░░░░░
@@ -165,7 +165,7 @@ ripple graph
 ```
 
 ```text
-ripple · dependency graph · v0.7.0
+ripple · dependency graph · v0.7.1
 
 Files            25
 Edges            28
@@ -216,30 +216,30 @@ ripple <command> [options]
 
 ### Options
 
-| Command   | Flag                  | Description                                                                                    |
-| --------- | --------------------- | ---------------------------------------------------------------------------------------------- |
-| `analyze` | `-j, --json`          | Emit the JSON report instead of the terminal report                                            |
-| `analyze` | `--sarif`             | Emit a SARIF 2.1.0 report for code scanning                                                    |
-| `analyze` | `-v, --verbose`       | Include the risk-factor point breakdown                                                        |
-| `analyze` | `-d, --depth <n>`     | Cap the reverse traversal at `n` levels                                                        |
-| `analyze` | `-c, --config <path>` | Use a specific config file                                                                     |
-| `analyze` | `--no-color`          | Disable ANSI colors                                                                            |
-| `graph`   | `-j, --json`          | Emit the JSON report                                                                           |
-| `graph`   | `-r, --reverse`       | Show dependents (what imports this file) instead of dependencies                               |
-| `graph`   | `-d, --depth <n>`     | Cap tree depth                                                                                 |
-| `graph`   | `-c, --config <path>` | Use a specific config file                                                                     |
-| `graph`   | `--no-color`          | Disable ANSI colors                                                                            |
-| `doctor`  | `-c, --config <path>` | Use a specific config file                                                                     |
-| `doctor`  | `-v, --verbose`       | Verbose output                                                                                 |
-| `doctor`  | `--no-color`          | Disable ANSI colors                                                                            |
-| `init`    | `-f, --force`         | Overwrite an existing config                                                                   |
-| `diff`    | `-j, --json`          | Emit the JSON report instead of the terminal report                                            |
-| `diff`    | `-b, --base <ref>`    | Git ref to diff against (default: `origin/main`, `main`, `HEAD~1`, or `diff.base` from config) |
-| `diff`    | `-g, --gate <level>`  | Blocking level: `medium`, `high`, or `critical` (default: `high`, or `diff.gate` from config)  |
-| `diff`    | `-f, --format <fmt>`  | Output: `terminal`, `json`, `github` (workflow annotations), or `sarif`                        |
-| `diff`    | `-d, --depth <n>`     | Cap reverse traversal per file                                                                 |
-| `diff`    | `-c, --config <path>` | Use a specific config file                                                                     |
-| `diff`    | `--no-color`          | Disable ANSI colors                                                                            |
+| Command   | Flag                  | Description                                                                                                                        |
+| --------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `analyze` | `-j, --json`          | Emit the JSON report instead of the terminal report                                                                                |
+| `analyze` | `--sarif`             | Emit a SARIF 2.1.0 report for code scanning                                                                                        |
+| `analyze` | `-v, --verbose`       | Include the risk-factor point breakdown                                                                                            |
+| `analyze` | `-d, --depth <n>`     | Cap the reverse traversal at `n` levels                                                                                            |
+| `analyze` | `-c, --config <path>` | Use a specific config file                                                                                                         |
+| `analyze` | `--no-color`          | Disable ANSI colors                                                                                                                |
+| `graph`   | `-j, --json`          | Emit the JSON report                                                                                                               |
+| `graph`   | `-r, --reverse`       | Show dependents (what imports this file) instead of dependencies                                                                   |
+| `graph`   | `-d, --depth <n>`     | Cap tree depth                                                                                                                     |
+| `graph`   | `-c, --config <path>` | Use a specific config file                                                                                                         |
+| `graph`   | `--no-color`          | Disable ANSI colors                                                                                                                |
+| `doctor`  | `-c, --config <path>` | Use a specific config file                                                                                                         |
+| `doctor`  | `-v, --verbose`       | Verbose output                                                                                                                     |
+| `doctor`  | `--no-color`          | Disable ANSI colors                                                                                                                |
+| `init`    | `-f, --force`         | Overwrite an existing config                                                                                                       |
+| `diff`    | `-j, --json`          | Emit the JSON report instead of the terminal report                                                                                |
+| `diff`    | `-b, --base <ref>`    | Git ref to diff against (default: GitHub PR base, `origin/HEAD`, `origin/main`, `origin/master`, `main`, `master`, or `diff.base`) |
+| `diff`    | `-g, --gate <level>`  | Blocking level: `medium`, `high`, or `critical` (default: `high`, or `diff.gate` from config)                                      |
+| `diff`    | `-f, --format <fmt>`  | Output: `terminal`, `json`, `github` (workflow annotations), or `sarif`                                                            |
+| `diff`    | `-d, --depth <n>`     | Cap reverse traversal per file                                                                                                     |
+| `diff`    | `-c, --config <path>` | Use a specific config file                                                                                                         |
+| `diff`    | `--no-color`          | Disable ANSI colors                                                                                                                |
 
 ### `ripple mcp`
 
@@ -292,7 +292,7 @@ files are included; deleted files and non-source changes are skipped.
 
 ```bash
 cd my-project
-ripple diff                       # vs origin/main (then main, then HEAD~1)
+ripple diff                       # vs the PR base or origin/main
 ripple diff --base HEAD~1 --json  # machine-readable gate report
 ripple diff --gate critical       # only CRITICAL blocks the merge
 ripple diff --allow "src/legacy/**"   # legacy files never block the gate
@@ -398,8 +398,8 @@ defaults — every field is optional.
 
 ```json
 {
-  "$schema": "./node_modules/@alimaandev/ripple/ripple.schema.json",
-  "include": ["**/*.{ts,tsx,js,jsx}"],
+  "$schema": "https://raw.githubusercontent.com/alimaandev/ripple/main/ripple.schema.json",
+  "include": ["**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}"],
   "ignore": ["node_modules", "dist", "build", "coverage", ".next", "out"],
   "aliases": { "@": "./src" },
   "tsconfigPath": "tsconfig.json",
@@ -425,19 +425,20 @@ defaults — every field is optional.
 
 > [!TIP]
 > The `$schema` line powers editor autocomplete and validation for
-> `ripple.config.json` — the package ships `ripple.schema.json` for it.
+> `ripple.config.json`. `ripple init` writes the hosted schema URL; the
+> package also ships `ripple.schema.json` if you prefer a local path.
 
-| Field             | Default                                                     | Purpose                                                |
-| ----------------- | ----------------------------------------------------------- | ------------------------------------------------------ |
-| `include`         | `**/*.{ts,tsx,js,jsx}`                                      | Source globs to analyze                                |
-| `ignore`          | `node_modules`, `dist`, `build`, `coverage`, `.next`, `out` | Exclusions                                             |
-| `aliases`         | `{}`                                                        | Path aliases, merged with tsconfig `paths` (user wins) |
-| `tsconfigPath`    | `tsconfig.json`                                             | tsconfig to read for `paths`                           |
-| `risk.weights`    | see example                                                 | Risk signal weights                                    |
-| `risk.thresholds` | 30 / 55 / 80                                                | Score thresholds for MEDIUM / HIGH / CRITICAL          |
-| `diff.base`       | `origin/main` → `main` → `HEAD~1`                           | Git ref to diff against when `--base` is not given     |
-| `diff.allow`      | `[]`                                                        | Globs of files that never block the gate               |
-| `diff.gate`       | `high`                                                      | Blocking level when `--gate` is not given              |
+| Field             | Default                                                                              | Purpose                                                   |
+| ----------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| `include`         | `**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}`                                               | Source globs to analyze                                   |
+| `ignore`          | `node_modules`, `dist`, `build`, `coverage`, `.next`, `out`                          | Exclusions                                                |
+| `aliases`         | `{}`                                                                                 | Path aliases, merged with tsconfig `paths` (user wins)    |
+| `tsconfigPath`    | `tsconfig.json`                                                                      | tsconfig to read for `paths`                              |
+| `risk.weights`    | see example                                                                          | Risk signal weights                                       |
+| `risk.thresholds` | 30 / 55 / 80                                                                         | Score thresholds for MEDIUM / HIGH / CRITICAL             |
+| `diff.base`       | GitHub PR base → `origin/HEAD` → `origin/main` → `origin/master` → `main` → `master` | Git ref to diff against when `--base` is not given        |
+| `diff.allow`      | `[]`                                                                                 | Project-relative globs of files that never block the gate |
+| `diff.gate`       | `high`                                                                               | Blocking level when `--gate` is not given                 |
 
 `node_modules` is always excluded, regardless of config.
 
@@ -550,7 +551,7 @@ verdict:
 ```json
 {
   "tool": "ripple",
-  "version": "0.5.0",
+  "version": "0.7.1",
   "command": "diff",
   "base": "origin/main",
   "changedFiles": 2,
@@ -560,20 +561,25 @@ verdict:
       "analyzed": true,
       "risk": { "score": 88.2, "level": "CRITICAL", "factors": [] },
       "affectedFiles": 14,
-      "targetInCycle": false
+      "targetInCycle": false,
+      "allowed": false
     },
     { "file": "src/api/legacy.js", "analyzed": false }
   ],
   "gate": {
     "level": "high",
     "blocked": true,
-    "counts": { "low": 0, "medium": 0, "high": 0, "critical": 1 }
+    "counts": { "low": 0, "medium": 0, "high": 0, "critical": 1 },
+    "allowed": 0
   },
   "durationMs": 118
 }
 ```
 
 `blocked` tells CI everything: exit code `1` if `true`, `0` otherwise.
+`files[].file` is project-relative (relative to the directory containing your
+Ripple config); SARIF and GitHub annotations use repository-relative paths so
+Code Scanning and PR annotations land on the right file in a monorepo.
 
 ### Use it in CI
 

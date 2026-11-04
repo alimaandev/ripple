@@ -130,11 +130,18 @@ report), which builds either:
 `ripple diff` reads the repository exclusively through
 `git changed()/resolveBase()`, a thin read-only wrapper around `git`:
 
-1. `resolveBase(cwd, requested?)` — prefers `--base`, else tries
-   `origin/main`, `main`, `HEAD~1` (whichever `rev-parse --verify` accepts).
-2. `changedFiles` — computes the merge base, lists tracked diffs
+1. `repoRootFor(cwd)` — resolves `git rev-parse --show-toplevel`, so every
+   later command runs from the repository root and reports paths relative to
+   it, even when Ripple runs from a package subdirectory.
+2. `resolveBase(cwd, requested?)` — prefers `--base`, then the GitHub PR base
+   (`GITHUB_BASE_REF`), then `origin/HEAD`, `origin/main`, `origin/master`,
+   `main`, `master`. `HEAD~1` is a warned last resort; a default ref that
+   resolves to `HEAD` is accepted only as a last resort, with a warning that
+   the change set covers just the uncommitted edits.
+3. `changedFiles` — computes the merge base, lists tracked diffs
    (`--diff-filter=ACMRT`, deletions excluded because there is nothing to
-   analyze) plus untracked files, and returns repo-relative paths sorted.
+   analyze) plus untracked files, and returns repo-relative paths sorted. Both
+   git listings use `-z`, so paths with spaces or quotes survive intact.
 
 `diffCommand` then runs the standard pipeline once and scores every changed
 source file with `analyzeFile`; any result at or above the gate level

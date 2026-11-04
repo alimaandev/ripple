@@ -7,7 +7,7 @@
  */
 
 /** Source file kinds Ripple analyzes. */
-export type SourceFileKind = "ts" | "tsx" | "js" | "jsx";
+export type SourceFileKind = "ts" | "tsx" | "js" | "jsx" | "mts" | "cts" | "mjs" | "cjs";
 
 /** One named import/export binding. */
 export interface ImportSpecifier {

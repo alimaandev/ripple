@@ -60,12 +60,18 @@ function impactLine(result: AnalysisResult, style: TextStyle): string {
 }
 
 /** Build the affected-file tree: depth-1 files are roots, deeper files are
- * nested under the first (deterministic) affected importer. */
-function buildAffectedTree(result: AnalysisResult, cwd: string, style: TextStyle): TreeNode[] {
+ * nested under the first (deterministic) affected importer. `limit` caps the
+ * number of files included so the terminal report matches its "N more" line. */
+function buildAffectedTree(
+  result: AnalysisResult,
+  cwd: string,
+  style: TextStyle,
+  limit: number,
+): TreeNode[] {
   const { affected, graph } = result;
-  const sorted = [...affected.entries()].sort(
-    ([, a], [, b]) => a.depth - b.depth || a.path.localeCompare(b.path),
-  );
+  const sorted = [...affected.entries()]
+    .sort(([, a], [, b]) => a.depth - b.depth || a.path.localeCompare(b.path))
+    .slice(0, limit);
 
   const nodesByKey = new Map<string, TreeNode & { children: TreeNode[] }>();
   const depthByKey = new Map<string, number>();
@@ -160,9 +166,9 @@ export function renderAnalyzeReport(
 
   if (summary.affectedFiles > 0) {
     writer.writeLine(sectionHeader(`Affected files (${summary.affectedFiles})`, style));
-    const tree = buildAffectedTree(result, options.cwd, style);
-    writer.writeLine(renderTree(tree));
     const limit = options.listLimit ?? DEFAULT_LIST_LIMIT;
+    const tree = buildAffectedTree(result, options.cwd, style, limit);
+    writer.writeLine(renderTree(tree));
     if (summary.affectedFiles > limit) {
       writer.writeLine(
         dim(`${summary.affectedFiles - limit} more… use --json for the full list`, style),

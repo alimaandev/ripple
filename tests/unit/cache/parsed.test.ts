@@ -22,7 +22,7 @@ function tempDir(prefix: string): string {
 
 function minimalConfig(overrides: Partial<RippleConfig> = {}): RippleConfig {
   return {
-    include: ["**/*.{ts,tsx,js,jsx}"],
+    include: ["**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}"],
     ignore: ["node_modules", "dist"],
     aliases: {},
     tsconfigPath: "tsconfig.json",
@@ -60,7 +60,7 @@ function fixturePaths(root: string): string[] {
 
 describe("cache location and hashing", () => {
   it("stores the cache under .ripple/cache in the project root", () => {
-    expect(CACHE_FILE).toBe(path.join(".ripple", "cache", "parsed-v2.json"));
+    expect(CACHE_FILE).toBe(path.join(".ripple", "cache", "parsed-v3.json"));
   });
 
   it("hashes file content deterministically", async () => {
@@ -73,7 +73,7 @@ describe("cache location and hashing", () => {
   it("config hash is stable across key order and ignores non-discovery fields", () => {
     const base = minimalConfig();
     const shuffled = minimalConfig({
-      include: ["**/*.{ts,tsx,js,jsx}"],
+      include: ["**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}"],
       ignore: ["dist", "node_modules"],
       risk: { ...base.risk, thresholds: { medium: 1, high: 2, critical: 3 } },
       diff: { gate: "critical", allow: ["x/**"] },

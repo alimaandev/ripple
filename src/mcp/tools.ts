@@ -3,11 +3,12 @@ import { analyzeFile } from "../analyzer/analyze.js";
 import type { ProjectContext } from "../types/project.js";
 import type { DependencyGraph } from "../types/graph.js";
 import type { AnalysisResult } from "../types/analysis.js";
-import { pathKey } from "../utils/paths.js";
+import { pathKey, toPosix } from "../utils/paths.js";
 import type { ChangedFiles } from "../git/changed.js";
 import type { McpTool, McpToolResult } from "./server.js";
 import { RippleError } from "../utils/errors.js";
 import { ExitCode } from "../types/cli.js";
+import { evaluateGate } from "../commands/gate.js";
 
 /**
  * The `ripple mcp` tool set. Each tool is a thin, deterministic wrapper over
@@ -94,8 +95,8 @@ function analyzeIn(
 }
 
 function relPath(targetPath: string, cwd: string): string {
-  const rel = targetPath.slice(cwd.length).replace(/^[/\\]+/, "");
-  return (rel || targetPath).replace(/\\/g, "/");
+  const rel = path.relative(cwd, targetPath);
+  return toPosix(rel || path.basename(targetPath));
 }
 
 const IMPACT_SCHEMA = {
@@ -146,7 +147,8 @@ const GATE_SCHEMA = {
   properties: {
     base: {
       type: "string",
-      description: "Git ref to diff against (default: origin/main, main, or HEAD~1).",
+      description:
+        "Git ref to diff against (default: GitHub base, origin/main, origin/master, main, master).",
     },
     gate: {
       type: "string",
@@ -155,8 +157,6 @@ const GATE_SCHEMA = {
     },
   },
 } satisfies Record<string, unknown>;
-
-const LEVEL_INDEX: Record<string, number> = { LOW: 1, MEDIUM: 2, HIGH: 3, CRITICAL: 4 };
 
 export function createMcpTools(deps: McpToolDeps): McpTool[] {
   const { cwd, loadProject, getChanged } = deps;
@@ -200,7 +200,7 @@ export function createMcpTools(deps: McpToolDeps): McpTool[] {
           const file = requireString(args, "file", "dependents");
           const depth = optionalPositiveInt(args, "depth", "dependents") ?? 1;
           const project = await loadProject();
-          const result = analyzeIn(project, cwd, file);
+          const result = analyzeIn(project, cwd, file, depth);
           const dependents = [...result.affected.values()]
             .filter((affected) => affected.depth <= depth)
             .sort((a, b) => a.depth - b.depth || a.path.localeCompare(b.path))
@@ -279,41 +279,44 @@ export function createMcpTools(deps: McpToolDeps): McpTool[] {
               ),
             );
           }
-          const changed = getChanged(base);
           const project = await loadProject();
           const resolvedGate = gate ?? project.context.config.diff.gate ?? "high";
-          const gateIndex = LEVEL_INDEX[resolvedGate.toUpperCase()] ?? 3;
+          const changed = getChanged(base ?? project.context.config.diff.base);
+          const evaluation = evaluateGate({
+            context: project.context,
+            graph: project.graph,
+            entryPoints: project.entryPoints,
+            changed,
+            gate: resolvedGate,
+            allowPatterns: project.context.config.diff.allow ?? [],
+          });
 
-          const files: Array<Record<string, unknown>> = [];
-          const counts = { low: 0, medium: 0, high: 0, critical: 0 };
-          let blocked = false;
-          for (const rel of changed.files) {
-            try {
-              const result = analyzeIn(project, cwd, rel);
-              const level = result.risk.level;
-              counts[level.toLowerCase() as keyof typeof counts] += 1;
-              if ((LEVEL_INDEX[level] ?? 1) >= gateIndex) blocked = true;
-              files.push({
-                file: rel,
-                analyzed: true,
-                level,
-                score: result.risk.score,
-                affectedFiles: result.summary.affectedFiles,
-                targetInCycle: result.targetInCycle,
-              });
-            } catch {
-              files.push({ file: rel, analyzed: false });
-            }
-          }
+          const files = evaluation.changes.map((change) => {
+            if (!change.result) return { file: change.file, analyzed: false };
+            return {
+              file: change.file,
+              analyzed: true,
+              level: change.result.risk.level,
+              score: change.result.risk.score,
+              affectedFiles: change.result.summary.affectedFiles,
+              targetInCycle: change.result.targetInCycle,
+              allowed: change.allowed,
+            };
+          });
 
           return ok(
             JSON.stringify(
               {
                 base: changed.baseLabel,
-                changedFiles: changed.files.length,
+                changedFiles: evaluation.changes.length,
                 files,
-                counts,
-                gate: { level: resolvedGate, blocked, verdict: blocked ? "block" : "pass" },
+                counts: evaluation.counts,
+                gate: {
+                  level: resolvedGate,
+                  blocked: evaluation.blocked,
+                  verdict: evaluation.blocked ? "block" : "pass",
+                  allowed: evaluation.allowedCount,
+                },
               },
               null,
               2,
