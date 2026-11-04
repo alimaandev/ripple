@@ -81,7 +81,7 @@ describeGit("changedFiles", () => {
 
     const changed = changedFiles(repo, "main");
     expect(changed.baseLabel).toBe("main");
-    expect(changed.repoRoot.toLowerCase()).toBe(path.resolve(repo).toLowerCase());
+    expect(changed.repoRoot.toLowerCase()).toBe(fs.realpathSync.native(repo).toLowerCase());
     expect(changed.files).toEqual(["a.txt", "c.txt"]);
   });
 
@@ -100,7 +100,7 @@ describeGit("changedFiles", () => {
     // Git reports paths relative to the repository root, never the cwd.
     expect(changed.files).toEqual(["packages/app/src/a.ts", "packages/app/src/new.ts"]);
     expect(path.resolve(changed.repoRoot, changed.files[0]!).toLowerCase()).toBe(
-      path.join(packageDir, "src", "a.ts").toLowerCase(),
+      fs.realpathSync.native(path.join(packageDir, "src", "a.ts")).toLowerCase(),
     );
   });
 

@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
-import path from "node:path";
 import { RippleError } from "../utils/errors.js";
+import { realPath } from "../utils/paths.js";
 import { ExitCode } from "../types/cli.js";
 
 /**
@@ -52,7 +52,7 @@ function git(args: string[], cwd: string): string {
 export function repoRootFor(cwd: string): string {
   try {
     const root = chomp(gitRaw(["rev-parse", "--show-toplevel"], cwd));
-    if (root) return path.resolve(root);
+    if (root) return realPath(root, cwd);
   } catch {
     /* fall through to the shared error below */
   }

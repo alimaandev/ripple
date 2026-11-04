@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import {
   displayPath,
   firstSegment,
@@ -7,6 +10,7 @@ import {
   jsToTsCandidate,
   jsToTsCandidates,
   pathKey,
+  realPath,
   sourceFileKind,
   toPosix,
 } from "../../../src/utils/paths.js";
@@ -29,6 +33,24 @@ describe.skipIf(!isWin)("pathKey", () => {
     const cwd = "C:\\proj";
     const key = pathKey("c:/proj/./src/Auth/Login.ts", cwd);
     expect(key).toBe("c:/proj/src/auth/login.ts");
+  });
+});
+
+describe("realPath", () => {
+  it("returns the canonical path for an existing file", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ripple-realpath-"));
+    try {
+      const file = path.join(dir, "a.ts");
+      fs.writeFileSync(file, "export const a = 1;\n");
+      expect(realPath(file, dir)).toBe(fs.realpathSync.native(file));
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("falls back to an absolute path when the target does not exist", () => {
+    const missing = path.join(os.tmpdir(), `ripple-missing-${process.pid}.ts`);
+    expect(realPath(missing, os.tmpdir())).toBe(path.resolve(missing));
   });
 });
 

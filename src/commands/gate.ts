@@ -7,7 +7,7 @@ import type { GateLevel } from "../types/output.js";
 import type { ProjectContext } from "../types/project.js";
 import type { RiskLevel } from "../types/risk.js";
 import type { ChangedFiles } from "../git/changed.js";
-import { pathKey, toPosix } from "../utils/paths.js";
+import { pathKey, realPath, toPosix } from "../utils/paths.js";
 
 /**
  * Shared diff-gate evaluation.
@@ -74,7 +74,7 @@ export function riskySummary(counts: DiffCounts, gate: GateLevel): string {
 
 /** POSIX path relative to the project root (`.` for the root itself). */
 export function projectRelativePath(absPath: string, rootDir: string): string {
-  const rel = toPosix(path.relative(rootDir, absPath));
+  const rel = toPosix(path.relative(realPath(rootDir, rootDir), realPath(absPath, rootDir)));
   return rel === "" ? "." : rel;
 }
 
@@ -129,12 +129,16 @@ export function evaluateGate(input: GateEvaluationInput): GateEvaluation {
   const seen = new Set<string>();
 
   for (const repoPath of changed.files) {
-    const absPath = path.resolve(changed.repoRoot, repoPath);
+    const gitPath = path.resolve(changed.repoRoot, repoPath);
+    const file = projectRelativePath(gitPath, context.rootDir);
+    // Re-anchor under the project root so graph keys and display paths use the
+    // same path form as discovery (Windows may hand git a long path and this
+    // process a short-name cwd).
+    const absPath = file === "." ? context.rootDir : path.resolve(context.rootDir, file);
     const key = pathKey(absPath, context.rootDir);
     if (seen.has(key)) continue;
     seen.add(key);
 
-    const file = projectRelativePath(absPath, context.rootDir);
     if (!graph.nodes.has(key)) {
       changes.push({ file, repoPath, absPath, allowed: false });
       continue;

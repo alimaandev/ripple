@@ -21,6 +21,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   paths are resolved against the repository root returned by git, not the
   process working directory, and reports use the correct project-relative
   paths.
+- Git and Node paths are canonicalized before comparison, so `ripple diff`
+  also works on Windows runners whose temp directory is reached through an
+  8.3 short name (`RUNNER~1`) while git reports the long path.
 - Base resolution prefers the GitHub PR base and remote-tracking refs
   (`origin/HEAD`, `origin/main`, `origin/master`) over local branches, warns
   when a base resolves to `HEAD`, and uses `HEAD~1` only as a warned last

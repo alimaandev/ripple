@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import type { SourceFileKind } from "../types/parser.js";
 
@@ -30,6 +31,24 @@ export function toPosix(filePath: string): string {
 /** Normalize a path and make it absolute. */
 export function normalizeAbsolute(filePath: string, cwd: string): string {
   return path.resolve(cwd, filePath);
+}
+
+/**
+ * Canonical absolute path: resolves symlinks and Windows 8.3 short names so
+ * two strings that name the same file compare equal. Falls back to
+ * `path.resolve` when the path does not exist.
+ *
+ * Git returns canonical (long) paths while Node can inherit a short-name cwd
+ * from the environment; without this, `path.relative` between the two invents
+ * a `..`-laden path and the changed file looks like it is outside the project.
+ */
+export function realPath(filePath: string, cwd: string): string {
+  const absolute = path.resolve(cwd, filePath);
+  try {
+    return fs.realpathSync.native(absolute);
+  } catch {
+    return absolute;
+  }
 }
 
 /**
