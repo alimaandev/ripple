@@ -41,7 +41,7 @@ describe("initCommand", () => {
       risk?: unknown;
     };
     expect(config.$schema).toContain("ripple.schema.json");
-    expect(config.include).toEqual(["**/*.{ts,tsx,js,jsx}"]);
+    expect(config.include).toEqual(["**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}"]);
     expect(config.risk).toBeUndefined();
   });
 
@@ -75,7 +75,7 @@ describe("initCommand", () => {
     const content = fs.readFileSync(path.join(dir, "ripple.config.ts"), "utf8");
     expect(content).toContain('import type { RippleConfig } from "@alimaandev/ripple"');
     expect(content).toContain("export default config");
-    expect(content).toContain("**/*.{ts,tsx,js,jsx}");
+    expect(content).toContain("**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}");
   });
 
   it("renders the full defaults as a valid ts literal with --ts --full", async () => {

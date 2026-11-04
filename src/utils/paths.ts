@@ -1,4 +1,5 @@
 import path from "node:path";
+import type { SourceFileKind } from "../types/parser.js";
 
 /**
  * Path helpers shared across Ripple.
@@ -8,9 +9,18 @@ import path from "node:path";
  * differing only in case must not create two graph nodes.
  */
 
-export const SOURCE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"] as const;
+export const SOURCE_EXTENSIONS = [
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".mts",
+  ".cts",
+  ".mjs",
+  ".cjs",
+] as const;
 
-export const RESOLVABLE_EXTENSIONS = [...SOURCE_EXTENSIONS, ".mjs", ".cjs", ".d.ts"] as const;
+export const RESOLVABLE_EXTENSIONS = [...SOURCE_EXTENSIONS, ".d.ts"] as const;
 
 /** Convert a path to forward slashes for display and matching. */
 export function toPosix(filePath: string): string {
@@ -43,11 +53,11 @@ export function isBareSpecifier(specifier: string): boolean {
 }
 
 /** Source file kind from an absolute path. Declaration files are excluded. */
-export function sourceFileKind(filePath: string): "ts" | "tsx" | "js" | "jsx" | undefined {
+export function sourceFileKind(filePath: string): SourceFileKind | undefined {
   if (/\.d\.[cm]?ts$/i.test(filePath)) return undefined;
   const ext = path.extname(filePath).toLowerCase();
   return SOURCE_EXTENSIONS.includes(ext as (typeof SOURCE_EXTENSIONS)[number])
-    ? (ext.slice(1) as "ts" | "tsx" | "js" | "jsx")
+    ? (ext.slice(1) as SourceFileKind)
     : undefined;
 }
 
@@ -57,17 +67,31 @@ export function extensionCandidates(basePath: string): string[] {
 }
 
 /**
- * TS-style JS extension swap: when a specifier imports `./x.js` but only
- * `./x.ts` exists (NodeNext-style projects), the candidate resolves to the TS
- * file.
+ * TS-style JS extension swaps: when a specifier imports `./x.js` but only
+ * `./x.ts` (or `./x.tsx`) exists, the candidate resolves to the TS file.
+ * Returns every plausible TS sibling; the resolver probes them in order.
  */
+export function jsToTsCandidates(candidate: string): string[] {
+  const ext = path.extname(candidate).toLowerCase();
+  if (ext === "") return [];
+  const stem = candidate.slice(0, -ext.length);
+  switch (ext) {
+    case ".js":
+      return [`${stem}.ts`, `${stem}.tsx`];
+    case ".jsx":
+      return [`${stem}.tsx`];
+    case ".mjs":
+      return [`${stem}.mts`];
+    case ".cjs":
+      return [`${stem}.cts`];
+    default:
+      return [];
+  }
+}
+
+/** First JS-to-TS candidate, or the input unchanged when there is none. */
 export function jsToTsCandidate(candidate: string): string {
-  const ext = path.extname(candidate);
-  if (ext === ".js") return candidate.slice(0, -3) + ".ts";
-  if (ext === ".jsx") return candidate.slice(0, -4) + ".tsx";
-  if (ext === ".mjs") return candidate.slice(0, -4) + ".mts";
-  if (ext === ".cjs") return candidate.slice(0, -4) + ".cts";
-  return candidate;
+  return jsToTsCandidates(candidate)[0] ?? candidate;
 }
 
 /** Human-readable relative path (from cwd) for display in output. */

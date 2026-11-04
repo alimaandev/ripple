@@ -27,26 +27,29 @@ export async function analyzeCommand(
     throw new RippleError(`File not found: ${fileArg}`, ExitCode.NotFound);
   }
 
-  const tracker = createStageTracker(!options.json);
+  const tracker = createStageTracker(!options.json && !options.sarif);
   tracker.next("Loading config");
 
   const started = Date.now();
   const context = await loadProjectContext(ctx.cwd, options.config);
 
   tracker.next("Building dependency graph");
-  const { graph, entryPoints, durationMs: pipelineMs } = await runPipeline(context);
+  const { graph, entryPoints } = await runPipeline(context);
 
   tracker.next("Analyzing impact");
-  const completed = Date.now();
   const result = analyzeFile({
     graph,
     context,
     entryPoints,
     targetKey: requireNode(graph, targetPath, context.rootDir).key,
     targetPath,
-    durationMs: pipelineMs + (completed - started),
+    durationMs: 0,
     ...(options.depth !== undefined ? { maxDepth: options.depth } : {}),
   });
+  // One wall-clock measurement for the whole command: config + pipeline +
+  // impact analysis. `runPipeline` reports its own subset, but adding the two
+  // would count the pipeline twice.
+  result.durationMs = Date.now() - started;
   tracker.done();
 
   if (options.json) {

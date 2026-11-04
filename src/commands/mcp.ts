@@ -25,14 +25,16 @@ export interface McpOptions {
 }
 
 export async function mcpCommand(options: McpOptions, ctx: CommandContext): Promise<ExitCode> {
-  let snapshot: ProjectSnapshot | null = null;
+  /**
+   * Rebuild the project on every tool call. A long-lived MCP session is
+   * exactly the workflow that edits files between calls, so a memoized graph
+   * would answer from stale source. The incremental parse cache keeps the
+   * rebuild cheap: unchanged files are stat + cache hits, not re-parses.
+   */
   const loadProject = async (): Promise<ProjectSnapshot> => {
-    if (!snapshot) {
-      const context = await loadProjectContext(ctx.cwd, options.config);
-      const { graph, entryPoints } = await runPipeline(context);
-      snapshot = { context, graph, entryPoints };
-    }
-    return snapshot;
+    const context = await loadProjectContext(ctx.cwd, options.config);
+    const { graph, entryPoints } = await runPipeline(context);
+    return { context, graph, entryPoints };
   };
 
   const server = new McpServer({

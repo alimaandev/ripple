@@ -106,7 +106,7 @@
         "base": {
           "type": "string",
           "minLength": 1,
-          "description": "Git ref used as the change-set base when no `--base` is given."
+          "description": "Git ref used as the change-set base when no `--base` is given. Defaults to the GitHub PR base, then `origin/HEAD`, `origin/main`, `origin/master`, `main`, or `master`."
         },
         "gate": {
           "enum": ["medium", "high", "critical"],
@@ -115,7 +115,7 @@
         "allow": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "Glob patterns of changed files that are analyzed and reported but never block the gate."
+          "description": "Glob patterns of changed files (relative to the project root) that are analyzed and reported but never block the gate."
         }
       }
     }

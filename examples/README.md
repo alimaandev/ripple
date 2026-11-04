@@ -2,12 +2,13 @@
 
 ## Minimal config
 
-`ripple.config.json` created by `ripple init`:
+`ripple.config.json` created by `ripple init --full`:
 
 ```json
 {
-  "include": ["**/*.{ts,tsx,js,jsx}"],
-  "ignore": ["node_modules", "dist", "build", "coverage", ".next", "out", ".git"],
+  "$schema": "https://raw.githubusercontent.com/alimaandev/ripple/main/ripple.schema.json",
+  "include": ["**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}"],
+  "ignore": ["node_modules", "dist", "build", "coverage", ".next", "out"],
   "aliases": {},
   "tsconfigPath": "tsconfig.json",
   "risk": {
@@ -25,6 +26,10 @@
       "high": 55,
       "critical": 80
     }
+  },
+  "diff": {
+    "gate": "high",
+    "allow": []
   }
 }
 ```

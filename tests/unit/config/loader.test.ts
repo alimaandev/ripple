@@ -24,7 +24,7 @@ describe("loadConfig", () => {
     expect(result.config.risk.thresholds.medium).toBe(40);
     expect(result.config.risk.thresholds.high).toBe(55);
     expect(result.config.risk.weights.affectedFiles).toBe(0.3);
-    expect(result.config.include).toEqual(["**/*.{ts,tsx,js,jsx}"]);
+    expect(result.config.include).toEqual(["**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}"]);
   });
 
   it("loads a json config", async () => {

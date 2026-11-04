@@ -133,4 +133,47 @@ describe("buildAnalyzeSarif", () => {
       (b.runs[0]!.results[0]! as Record<string, unknown>).partialFingerprints,
     );
   });
+
+  it("keeps the fingerprint stable when the score or level changes", () => {
+    const low = buildAnalyzeSarif({
+      result: fakeResult({ risk: { level: "MEDIUM", score: 41.2, factors: [] } }),
+      cwd: basicFixture,
+      version: "0.7.0",
+    });
+    const critical = buildAnalyzeSarif({
+      result: fakeResult({ risk: { level: "CRITICAL", score: 93.7, factors: [] } }),
+      cwd: basicFixture,
+      version: "0.7.0",
+    });
+    const fingerprint = (doc: ReturnType<typeof buildAnalyzeSarif>) =>
+      (doc.runs[0]!.results[0]! as Record<string, unknown>).partialFingerprints;
+    expect(fingerprint(low)).toEqual(fingerprint(critical));
+  });
+});
+
+describe("buildDiffSarif in a monorepo subdirectory", () => {
+  it("uses the repository-relative path for Code Scanning URIs", () => {
+    const doc = buildDiffSarif({
+      baseLabel: "origin/main",
+      entries: [
+        {
+          rel: "src/auth/token.ts",
+          repoRel: "packages/app/src/auth/token.ts",
+          result: fakeResult(),
+          allowed: false,
+        },
+      ],
+      gate: "high",
+      counts,
+      blocked: true,
+      durationMs: 5,
+      version: "0.7.0",
+    });
+    const entry = doc.runs[0]!.results[0]! as Record<string, unknown>;
+    const location = (entry.locations as Array<Record<string, unknown>>)[0]!;
+    const artifact = location.physicalLocation as Record<string, unknown>;
+    expect((artifact.artifactLocation as Record<string, unknown>).uri).toBe(
+      "packages/app/src/auth/token.ts",
+    );
+  });
 });

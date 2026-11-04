@@ -6,7 +6,7 @@ import type { RippleConfig } from "../types/config.js";
  */
 export const DEFAULT_CONFIG: RippleConfig = {
   $schema: undefined,
-  include: ["**/*.{ts,tsx,js,jsx}"],
+  include: ["**/*.{ts,tsx,js,jsx,mts,cts,mjs,cjs}"],
   ignore: ["node_modules", "dist", "build", "coverage", ".next", "out", ".git"],
   aliases: {},
   tsconfigPath: "tsconfig.json",

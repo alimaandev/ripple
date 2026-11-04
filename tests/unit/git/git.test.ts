@@ -10,8 +10,19 @@ import { changedFiles, resolveBase } from "../../../src/git/changed.js";
  * is not available on the runner.
  */
 
-let gitBinary = false;
 let dir = "";
+
+function hasGit(): boolean {
+  try {
+    execFileSync("git", ["--version"], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Evaluated at module load: `describe.skip` cannot depend on `beforeAll`.
+const gitBinary = hasGit();
 
 function git(args: string[], cwd: string): string {
   return execFileSync("git", args, {
@@ -31,12 +42,7 @@ function newRepo(): string {
 }
 
 beforeAll(() => {
-  try {
-    execFileSync("git", ["--version"], { stdio: "ignore" });
-    gitBinary = true;
-  } catch {
-    return;
-  }
+  if (!gitBinary) return;
   dir = newRepo();
   fs.writeFileSync(path.join(dir, "seed.ts"), "export const seed = 1;\n");
   git(["add", "."], dir);
@@ -75,7 +81,46 @@ describeGit("changedFiles", () => {
 
     const changed = changedFiles(repo, "main");
     expect(changed.baseLabel).toBe("main");
+    expect(changed.repoRoot.toLowerCase()).toBe(path.resolve(repo).toLowerCase());
     expect(changed.files).toEqual(["a.txt", "c.txt"]);
+  });
+
+  it("resolves repo-root paths when run from a package subdirectory", () => {
+    const repo = newRepo();
+    const packageDir = path.join(repo, "packages", "app");
+    fs.mkdirSync(path.join(packageDir, "src"), { recursive: true });
+    fs.writeFileSync(path.join(packageDir, "src", "a.ts"), "export const a = 1;\n");
+    git(["add", "."], repo);
+    git(["commit", "-m", "baseline"], repo);
+
+    fs.writeFileSync(path.join(packageDir, "src", "a.ts"), "export const a = 2;\n");
+    fs.writeFileSync(path.join(packageDir, "src", "new.ts"), "export const n = 1;\n");
+
+    const changed = changedFiles(packageDir, "main");
+    // Git reports paths relative to the repository root, never the cwd.
+    expect(changed.files).toEqual(["packages/app/src/a.ts", "packages/app/src/new.ts"]);
+    expect(path.resolve(changed.repoRoot, changed.files[0]!).toLowerCase()).toBe(
+      path.join(packageDir, "src", "a.ts").toLowerCase(),
+    );
+  });
+
+  it("ignores Ripple cache artifacts", () => {
+    const repo = newRepo();
+    fs.writeFileSync(path.join(repo, "a.txt"), "baseline\n");
+    git(["add", "."], repo);
+    git(["commit", "-m", "baseline"], repo);
+
+    fs.mkdirSync(path.join(repo, ".ripple", "cache"), { recursive: true });
+    fs.writeFileSync(path.join(repo, ".ripple", "cache", "parsed-v3.json"), '{"schema":3}\n');
+    fs.mkdirSync(path.join(repo, "packages", "app", ".ripple", "cache"), { recursive: true });
+    fs.writeFileSync(
+      path.join(repo, "packages", "app", ".ripple", "cache", "parsed-v3.json"),
+      '{"schema":3}\n',
+    );
+    fs.writeFileSync(path.join(repo, "a.ts"), "export const a = 1;\n");
+
+    const changed = changedFiles(repo, "main");
+    expect(changed.files).toEqual(["a.ts"]);
   });
 
   it("omits deleted files from the change set", () => {

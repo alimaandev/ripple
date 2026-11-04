@@ -3,7 +3,7 @@ import path from "node:path";
 import { substituteAlias } from "../config/aliases.js";
 import type { AliasMap } from "../types/config.js";
 import type { EdgeKind } from "../types/graph.js";
-import { extensionCandidates, jsToTsCandidate, pathKey } from "../utils/paths.js";
+import { extensionCandidates, jsToTsCandidates, pathKey } from "../utils/paths.js";
 
 /**
  * Module specifier resolution.
@@ -43,10 +43,9 @@ function probeCandidates(base: string, fileKeys: Set<string>, rootDir: string): 
     const key = pathKey(candidate, rootDir);
     if (fileKeys.has(key)) return path.normalize(candidate);
   }
-  const jsSwapped = jsToTsCandidate(base);
-  if (jsSwapped !== base) {
-    const swappedKey = pathKey(jsSwapped, rootDir);
-    if (fileKeys.has(swappedKey)) return path.normalize(jsSwapped);
+  for (const swapped of jsToTsCandidates(base)) {
+    const swappedKey = pathKey(swapped, rootDir);
+    if (fileKeys.has(swappedKey)) return path.normalize(swapped);
   }
   return undefined;
 }

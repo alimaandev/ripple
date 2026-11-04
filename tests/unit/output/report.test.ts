@@ -99,6 +99,20 @@ describe("renderAnalyzeReport", () => {
     expect(writer.output).toContain("Points");
   });
 
+  it("truncates the affected tree to listLimit and matches the remainder count", async () => {
+    const result = await analyzeLogin();
+    const writer = new InMemoryWriter();
+    renderAnalyzeReport(
+      result,
+      { cwd: rootDir, color: false, verbose: false, listLimit: 2 },
+      writer,
+    );
+
+    const output = writer.output;
+    expect(output).toContain("5 more… use --json for the full list");
+    expect(output.match(/· depth \d/g)).toHaveLength(2);
+  });
+
   it("annotates cycle members", async () => {
     const project = createTsProject();
     const context = await loadProjectContext(rootDir);

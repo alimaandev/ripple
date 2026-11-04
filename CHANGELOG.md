@@ -4,6 +4,52 @@ All notable changes to Ripple are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-11-04
+
+### Added
+
+- `ripple diff --verbose` prints each changed file's affected-file count, max
+  depth and confidence below its risk row.
+- `ripple doctor -v` adds platform/architecture and dependency-graph stats.
+- Syntactic diagnostics are recorded as `parseError`: a file with invalid
+  syntax is counted as unparsed, so confidence drops instead of a broken file
+  silently looking clean.
+
+### Fixed
+
+- `ripple diff` now works from a package subdirectory in a monorepo. Changed
+  paths are resolved against the repository root returned by git, not the
+  process working directory, and reports use the correct project-relative
+  paths.
+- Base resolution prefers the GitHub PR base and remote-tracking refs
+  (`origin/HEAD`, `origin/main`, `origin/master`) over local branches, warns
+  when a base resolves to `HEAD`, and uses `HEAD~1` only as a warned last
+  resort. Git output is NUL-delimited, so paths with spaces or quotes survive.
+- Ripple's own `.ripple/` cache artifacts are never counted as changed files,
+  so consecutive `ripple diff` runs see the same change set.
+- The CLI and MCP `gate_status` tool share one gate evaluator: both honor
+  `diff.base` and `diff.allow`, and MCP reports the allowlisted count.
+- A long-lived `ripple mcp` session rebuilds its project snapshot on every
+  tool call, so files created or edited between calls are visible. The
+  `dependents` tool honors its `depth` argument.
+- The parse cache is schema v3, keyed by parser/cache version plus the package
+  version; writes use a unique temp file and only stale entries are rewritten.
+- `.mts`, `.cts`, `.mjs` and `.cjs` are discovered and parsed by default, and
+  JS specifiers resolve to their TS equivalents (`.js` → `.ts`/`.tsx`,
+  `.jsx` → `.tsx`, `.mjs` → `.mts`, `.cjs` → `.cts`).
+- SARIF fingerprints are score-independent, so a finding keeps its identity
+  when the score changes. Diff SARIF and GitHub annotations use
+  repository-relative paths; JSON reports stay project-relative.
+- The terminal affected-file tree truncates at 20 entries, matching its
+  "N more…" line. `ripple analyze` duration is one wall-clock measurement.
+- `ripple init` writes a `$schema` URL that resolves outside `node_modules`.
+
+### Changed
+
+- Publishing verifies that the git tag matches `package.json`, publishes the
+  exact packed tarball that passed a smoke test, uses npm provenance, and
+  sends prerelease versions to the `next` dist-tag.
+
 ## [0.7.0] - 2026-08-18
 
 ### Added

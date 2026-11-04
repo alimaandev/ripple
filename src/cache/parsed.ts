@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { Project } from "ts-morph";
@@ -6,6 +6,7 @@ import type { RippleConfig } from "../types/config.js";
 import type { ParsedFile } from "../types/parser.js";
 import { parseMany } from "../parser/parse.js";
 import { toPosix } from "../utils/paths.js";
+import pkg from "../../package.json" with { type: "json" };
 
 /**
  * Incremental parse cache.
@@ -25,8 +26,8 @@ import { toPosix } from "../utils/paths.js";
  * The cache lives in `<rootDir>/.ripple/cache/` and is written atomically.
  */
 
-export const CACHE_SCHEMA = 2;
-export const CACHE_FILE = path.join(".ripple", "cache", "parsed-v2.json");
+export const CACHE_SCHEMA = 3;
+export const CACHE_FILE = path.join(".ripple", "cache", "parsed-v3.json");
 
 /**
  * Set `RIPPLE_NO_CACHE=1` to force a cold run (e.g. for benchmarks). The
@@ -58,12 +59,15 @@ export async function contentHash(filePath: string): Promise<string> {
 }
 
 /**
- * Hash of the discovery-affecting config (include/ignore, sorted for
- * stability). Aliases and tsconfig paths do not affect parsing, so they are
- * deliberately excluded: resolution re-runs against cached surfaces.
+ * Hash of everything that changes the parsed surface: the cache schema, the
+ * Ripple version (a parser change ships with a release), and the
+ * discovery-affecting config (include/ignore). Aliases and tsconfig paths do
+ * not affect parsing, so they are deliberately excluded: resolution re-runs
+ * against cached surfaces.
  */
 export function configCacheHash(config: RippleConfig): string {
   const stable = {
+    parser: `${CACHE_SCHEMA}:${pkg.version}`,
     include: [...config.include].sort(),
     ignore: [...config.ignore].sort(),
   };
@@ -113,7 +117,7 @@ export async function saveParsedCache(
     files: Object.fromEntries(entries),
   };
   const target = cachePath(rootDir);
-  const tmp = target + ".tmp";
+  const tmp = `${target}.${process.pid}.${randomUUID()}.tmp`;
   try {
     await fs.mkdir(path.dirname(target), { recursive: true });
     await fs.writeFile(tmp, JSON.stringify(manifest), "utf8");
@@ -175,6 +179,8 @@ export async function loadParsedFiles(options: {
     }),
   );
   stage = traceAt("load-cache", stage);
+  const stateByRel = new Map(states.map((state) => [state.rel, state]));
+  const hashByRel = new Map<string, string>();
   const hits = new Map<string, ParsedCacheEntry>();
   const stale: string[] = [];
   const parsed = new Map<string, ParsedFile>();
@@ -200,6 +206,7 @@ export async function loadParsedFiles(options: {
     } catch {
       /* unreadable file: hash stays "" and the entry is re-parsed */
     }
+    hashByRel.set(state.rel, hash);
 
     if (entry !== undefined && entry.hash === hash) {
       if (entry.mtimeMs !== state.mtimeMs || entry.size !== state.size) {
@@ -227,18 +234,13 @@ export async function loadParsedFiles(options: {
 
   if (dirty) {
     const next = new Map<string, ParsedCacheEntry>(hits);
-    for (const parsedFile of parsed.values()) {
-      const rel = relPosix(rootDir, parsedFile.path);
-      if (next.has(rel)) continue;
-      const state = states.find((candidate) => candidate.rel === rel);
-      let hash = "";
-      try {
-        hash = await contentHash(parsedFile.path);
-      } catch {
-        /* unreadable file: hash stays "" */
-      }
+    for (const stalePath of stale) {
+      const rel = relPosix(rootDir, stalePath);
+      const parsedFile = parsed.get(rel);
+      if (parsedFile === undefined) continue;
+      const state = stateByRel.get(rel);
       next.set(rel, {
-        hash,
+        hash: hashByRel.get(rel) ?? "",
         size: state?.size ?? -1,
         mtimeMs: state?.mtimeMs ?? -1,
         parsed: { ...parsedFile, path: rel },

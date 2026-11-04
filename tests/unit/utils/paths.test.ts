@@ -5,6 +5,7 @@ import {
   isBareSpecifier,
   isRelativeSpecifier,
   jsToTsCandidate,
+  jsToTsCandidates,
   pathKey,
   sourceFileKind,
   toPosix,
@@ -53,6 +54,10 @@ describe("sourceFileKind", () => {
     expect(sourceFileKind("a.TSX")).toBe("tsx");
     expect(sourceFileKind("a.js")).toBe("js");
     expect(sourceFileKind("a.jsx")).toBe("jsx");
+    expect(sourceFileKind("a.mts")).toBe("mts");
+    expect(sourceFileKind("a.cts")).toBe("cts");
+    expect(sourceFileKind("a.mjs")).toBe("mjs");
+    expect(sourceFileKind("a.cjs")).toBe("cjs");
   });
 
   it("rejects other extensions", () => {
@@ -68,6 +73,11 @@ describe("jsToTsCandidate", () => {
     expect(jsToTsCandidate("src/x.mjs")).toBe("src/x.mts");
     expect(jsToTsCandidate("src/x.cjs")).toBe("src/x.cts");
     expect(jsToTsCandidate("src/x.ts")).toBe("src/x.ts");
+  });
+
+  it("offers tsx as a second candidate for js specifiers", () => {
+    expect(jsToTsCandidates("src/x.js")).toEqual(["src/x.ts", "src/x.tsx"]);
+    expect(jsToTsCandidates("src/x.ts")).toEqual([]);
   });
 });
 
