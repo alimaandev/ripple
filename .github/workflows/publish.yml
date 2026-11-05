@@ -48,8 +48,16 @@ jobs:
           echo "tarball=${tarball}" >> "$GITHUB_OUTPUT"
 
           # The published package must contain the CLI entry point and schema.
-          tar -tzf "$tarball" | grep -qx "package/dist/bin.js"
-          tar -tzf "$tarball" | grep -qx "package/ripple.schema.json"
+          # Capture the listing once: piping tar into `grep -q` makes grep exit
+          # after the first match, which closes the pipe and fails tar.
+          listing="${RUNNER_TEMP}/tarball-files.txt"
+          tar -tzf "$tarball" > "$listing"
+          for required in package/dist/bin.js package/ripple.schema.json; do
+            if ! grep -qx "$required" "$listing"; then
+              echo "::error::Packed tarball is missing ${required}"
+              exit 1
+            fi
+          done
 
           tmp="$(mktemp -d)"
           cd "$tmp"
