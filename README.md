@@ -4,21 +4,34 @@
 
 # Ripple
 
-**Dependency impact analysis for TypeScript and JavaScript.**
+**The CI gate that knows the blast radius.**
 
-Change less. Break less. Know the blast radius of any file before you touch it.
+Your AI agent's PR passed tests and still broke 37 routes. Ripple scores every
+changed file by what depends on it, then blocks the merge before that blast
+radius ships.
 
   <p align="center">
     &nbsp;<a href="https://www.npmjs.com/package/@alimaandev/ripple"><img alt="npm version" src="https://img.shields.io/npm/v/@alimaandev/ripple?logo=npm&logoColor=white&label=npm&style=for-the-badge"/></a>&nbsp;
     &nbsp;<a href="https://www.npmjs.com/package/@alimaandev/ripple"><img alt="npm downloads" src="https://img.shields.io/npm/dm/@alimaandev/ripple?label=downloads&style=for-the-badge"/></a>&nbsp;
+    &nbsp;<a href="https://github.com/marketplace?query=ripple"><img alt="GitHub Action" src="https://img.shields.io/badge/GitHub%20Actions-ripple--action-2088FF?logo=githubactions&logoColor=white&style=for-the-badge"/></a>&nbsp;
     &nbsp;<a href="https://github.com/alimaandev/ripple/actions/workflows/ci.yml"><img alt="CI build" src="https://img.shields.io/github/actions/workflow/status/alimaandev/ripple/ci.yml?branch=main&logo=githubactions&logoColor=white&label=CI%20build&style=for-the-badge"/></a>&nbsp;
     &nbsp;<a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/alimaandev/ripple?label=License&style=for-the-badge"/></a>&nbsp;
     &nbsp;<a href="package.json"><img alt="Node.js >= 22" src="https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=nodedotjs&logoColor=white&style=for-the-badge"/></a>&nbsp;
   </p>
 
-  <pre><code>npm install -g @alimaandev/ripple
+  <p align="center">
+    <a href="https://github.com/alimaandev/ripple-action"><strong>Add the gate to your pull requests →</strong></a>
+  </p>
 
-# or try it without installing anything:
+  <pre><code># .github/workflows/ripple.yml
+- uses: actions/checkout@v5
+  with:
+    fetch-depth: 0
+- uses: alimaandev/ripple-action@v1</code></pre>
+
+  <p align="center"><sub>No token. No config. Fails the job when a changed file crosses your gate.</sub></p>
+
+  <pre><code># or run it locally
 npx @alimaandev/ripple analyze src/your-file.ts</code></pre>
 
   <img src="https://raw.githubusercontent.com/alimaandev/ripple/main/assets/hero-animated.svg" alt="Animated terminal demo of `ripple analyze` — command types in, then the report builds up: risk score with gauge, affected files, routes, components, tests, and confidence" title="ripple analyze" width="100%" />
@@ -26,6 +39,13 @@ npx @alimaandev/ripple analyze src/your-file.ts</code></pre>
 </div>
 
 ## Why Ripple
+
+### AI writes PRs faster than you can review them
+
+AI agents produce plausible code at machine speed. Tests can still pass while a
+change quietly reaches dozens of routes, shared utilities and tests. Ripple
+makes that blast radius explicit before the merge, so you review the risk — not
+just the diff.
 
 ### The question your tooling doesn't answer
 
@@ -581,7 +601,33 @@ verdict:
 Ripple config); SARIF and GitHub annotations use repository-relative paths so
 Code Scanning and PR annotations land on the right file in a monorepo.
 
-### Use it in CI
+### GitHub Action
+
+The one-line gate for pull requests:
+
+```yaml
+name: Ripple
+on: pull_request
+
+jobs:
+  ripple:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: alimaandev/ripple-action@v1
+```
+
+It fails the job when a changed file crosses the gate, annotates the PR Files
+tab, writes a job summary, and emits `ripple.sarif` for Code Scanning. Use
+`working-directory: packages/app` in a monorepo, and `gate: critical` to tune
+the threshold. See the [action docs](https://github.com/alimaandev/ripple-action)
+for inputs, outputs and the SARIF upload step.
+
+### Raw JSON in any CI
 
 ```bash
 ripple analyze src/authentication/login.ts --json | jq -r .risk.level
@@ -672,6 +718,17 @@ and Windows, and a dogfood job — Ripple gates its own PRs with
 `ripple diff --format github`.
 
 ## Get started
+
+Gate your next pull request:
+
+```yaml
+- uses: actions/checkout@v5
+  with:
+    fetch-depth: 0
+- uses: alimaandev/ripple-action@v1
+```
+
+Or run it locally:
 
 ```bash
 npm install -g @alimaandev/ripple
