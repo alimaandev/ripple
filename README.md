@@ -13,7 +13,7 @@ radius ships.
   <p align="center">
     &nbsp;<a href="https://www.npmjs.com/package/@alimaandev/ripple"><img alt="npm version" src="https://img.shields.io/npm/v/@alimaandev/ripple?logo=npm&logoColor=white&label=npm&style=for-the-badge"/></a>&nbsp;
     &nbsp;<a href="https://www.npmjs.com/package/@alimaandev/ripple"><img alt="npm downloads" src="https://img.shields.io/npm/dm/@alimaandev/ripple?label=downloads&style=for-the-badge"/></a>&nbsp;
-    &nbsp;<a href="https://github.com/marketplace?query=ripple"><img alt="GitHub Action" src="https://img.shields.io/badge/GitHub%20Actions-ripple--action-2088FF?logo=githubactions&logoColor=white&style=for-the-badge"/></a>&nbsp;
+    &nbsp;<a href="https://github.com/marketplace/actions/ripple-pr-risk-gate"><img alt="GitHub Marketplace" src="https://img.shields.io/badge/GitHub%20Actions-Marketplace-2088FF?logo=githubactions&logoColor=white&style=for-the-badge"/></a>&nbsp;
     &nbsp;<a href="https://github.com/alimaandev/ripple/actions/workflows/ci.yml"><img alt="CI build" src="https://img.shields.io/github/actions/workflow/status/alimaandev/ripple/ci.yml?branch=main&logo=githubactions&logoColor=white&label=CI%20build&style=for-the-badge"/></a>&nbsp;
     &nbsp;<a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/alimaandev/ripple?label=License&style=for-the-badge"/></a>&nbsp;
     &nbsp;<a href="package.json"><img alt="Node.js >= 22" src="https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=nodedotjs&logoColor=white&style=for-the-badge"/></a>&nbsp;
