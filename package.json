@@ -1,6 +1,6 @@
 {
   "name": "@alimaandev/ripple",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "The CI gate that knows the blast radius. Risk-score every TypeScript and JavaScript change before AI or anyone breaks your codebase.",
   "keywords": [
     "cli",
