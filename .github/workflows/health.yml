@@ -1,0 +1,171 @@
+# Daily repository health check.
+#
+# `main` is protected, so the bot never pushes there. It runs the core quality
+# gates on `main`, then commits the deterministic health.json to the
+# unprotected `health` branch only when the result changes. When a check fails
+# it opens or updates an issue; when everything recovers it closes the issue.
+
+name: Health
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: health-check
+  cancel-in-progress: false
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Run health check
+        id: check
+        continue-on-error: true
+        run: node scripts/health-check.mjs --output health.json --markdown health.md
+
+      - name: Job summary
+        if: always()
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            if [ -f health.md ]; then
+              cat health.md
+            else
+              echo "## Ripple health: unknown"
+              echo
+              echo "The health check did not produce a report."
+            fi
+            echo
+            echo "Workflow run: $RUN_URL"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit health status when it changes
+        id: commit
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ ! -f "$GITHUB_WORKSPACE/health.json" ]; then
+            echo "No health.json produced; nothing to commit."
+            exit 0
+          fi
+
+          health_dir="$RUNNER_TEMP/ripple-health"
+          rm -rf "$health_dir"
+          mkdir -p "$health_dir"
+          cd "$health_dir"
+
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          if fetch_output="$(git fetch --depth=1 origin health 2>&1)"; then
+            git checkout -q -B health FETCH_HEAD
+          elif printf '%s' "$fetch_output" | grep -Eqi "couldn't find remote ref|could not find remote ref"; then
+            git checkout -q --orphan health
+          else
+            printf '%s\n' "$fetch_output" >&2
+            exit 1
+          fi
+
+          cp "$GITHUB_WORKSPACE/health.json" health.json
+          git add -f health.json
+
+          if git rev-parse --verify HEAD >/dev/null 2>&1 && git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Status unchanged; nothing to commit."
+            exit 0
+          fi
+
+          status="$(node -p "JSON.parse(require('fs').readFileSync('health.json', 'utf8')).status")"
+          git commit -q -m "chore(health): ${status}"
+          git push -q origin HEAD:health
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "Committed health status: ${status}"
+
+      - name: Update health issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          title="Ripple health check is failing"
+
+          if [ -f health.json ]; then
+            status="$(node -p "JSON.parse(require('fs').readFileSync('health.json', 'utf8')).status")"
+          else
+            status="unhealthy"
+          fi
+
+          number="$(gh issue list --state open --limit 100 --json number,title --jq ".[] | select(.title == \"$title\") | .number" | head -n 1)"
+
+          if [ "$status" = "unhealthy" ]; then
+            {
+              echo "The daily health check is failing."
+              echo
+              if [ -f health.md ]; then
+                cat health.md
+              else
+                echo "No health report was produced. The workflow failed before the check completed."
+              fi
+              echo
+              echo "Workflow run: $RUN_URL"
+            } > "$RUNNER_TEMP/health-issue.md"
+
+            if [ -n "$number" ]; then
+              gh issue edit "$number" --body-file "$RUNNER_TEMP/health-issue.md"
+            else
+              gh issue create --title "$title" --body-file "$RUNNER_TEMP/health-issue.md"
+            fi
+          elif [ -n "$number" ]; then
+            gh issue comment "$number" --body "Recovered — all health checks pass again. Closing.
+
+          Workflow run: $RUN_URL"
+            gh issue close "$number"
+          fi
+
+      - name: Upload health report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: health-report
+          path: |
+            health.json
+            health.md
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Fail when unhealthy
+        if: always() && steps.check.outcome == 'failure'
+        run: |
+          echo "Health check failed. See the issue and the health-report artifact."
+          exit 1

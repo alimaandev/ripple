@@ -8,3 +8,5 @@ LICENSE
 tests/fixtures
 .github
 examples
+health.json
+health.md

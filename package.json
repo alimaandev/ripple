@@ -69,6 +69,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "health": "node scripts/health-check.mjs",
     "metrics": "node scripts/metrics.mjs",
     "prepublishOnly": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build"
   },
