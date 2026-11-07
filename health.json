@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "status": "healthy",
+  "version": "0.7.2",
+  "checks": [
+    {
+      "name": "typecheck",
+      "status": "pass"
+    },
+    {
+      "name": "lint",
+      "status": "pass"
+    },
+    {
+      "name": "test",
+      "status": "pass"
+    },
+    {
+      "name": "build",
+      "status": "pass"
+    },
+    {
+      "name": "doctor",
+      "status": "pass"
+    },
+    {
+      "name": "analyze",
+      "status": "pass"
+    }
+  ]
+}
